@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="git-like-config" default="build" basedir=".">	
+	<description>GIT like configuration management, Juan Timoteo Ponce Ortiz.</description>
+
+	<property file="build.properties" />
+
+	<path id="compile.classpath">
+		<fileset dir="lib" includes="*.jar" />		
+	</path>
+
+	<path id="src.path">
+		<pathelement location="${project.src}" />
+	</path>
+
+	<path id="run.classpath">
+		<path refid="compile.classpath" />
+		<path location="${project.build}" />
+		<path location="${project.config}" />
+		<path location="${project.resources}" />
+	</path>
+
+	<path id="test.classpath">
+		<path refid="run.classpath" />
+	</path>
+
+
+	<target name="init">
+		<mkdir dir="${project.config}" />
+		<mkdir dir="${project.resources}" />
+		<mkdir dir="${project.src}" />
+		<mkdir dir="${project.test}" />
+		<mkdir dir="${project.lib}" />
+	</target>
+
+	<target name="compile-test" depends="compile">
+		<javac encoding="iso-8859-1" destdir="${project.build}" classpathref="test.classpath" includes="**/*.java" debug="true">
+			<src path="${project.test}" />
+		</javac>
+	</target>
+
+
+	<target name="prepare" depends="init">
+		<mkdir dir="${project.build}" />
+	</target>
+
+	<target name="build" depends="compile,init" description="Build the project incrementally.">
+	</target>
+
+	<target name="clean">
+		<delete dir="${project.build}" />
+	</target>
+
+	<target name="compile" depends="prepare" description="Compile the sources (checked in and generated)">
+		<copy todir="${project.build}">
+			<fileset dir="${project.src}">
+				<include name="**/*.properties" />
+			</fileset>
+			<fileset dir="${project.config}">
+				<include name="*.properties" />
+				<include name="*.xml" />
+			</fileset>
+		</copy>
+		<javac encoding="iso-8859-1" destdir="${project.build}" classpathref="compile.classpath" includes="**/*.java" debug="true">
+			<src path="${project.src}" />
+		</javac>
+	</target>
+
+
+	<target name="jar" depends="build" description="Build a distribution jar file">
+		<delete dir="${project.build.dist}" />
+		<mkdir dir="${project.build.dist}" />
+
+		<copy todir="${project.build.dist}/lib">
+			<fileset dir="lib" includes="*.jar" />
+			<fileset refid="mvn.classpath" />
+		</copy>
+		
+		<copy todir="${project.build.dist}/config">
+			<fileset dir="${project.config}" includes="*" />
+		</copy>
+
+		<copy todir="${project.build.dist}/resources">
+			<fileset dir="${project.resources}" includes="**/*" />
+		</copy>
+
+		<copy todir="${project.build.dist}/database">
+			<fileset dir="${basedir}/database" includes="*.db" />
+		</copy>
+		
+		<path id="jar.lib.classpath">
+			<fileset dir="${project.build.dist}/lib">
+				<include name="**/*.jar" />
+			</fileset>			
+			<pathelement location="${project.build.dist}/config" />
+			<pathelement location="${project.build.dist}/resources" />
+		</path>
+
+		<manifestclasspath property="jar.classpath" jarfile="${project.build.dist}/${dist.jar.name}">
+			<classpath refid="jar.lib.classpath" />
+		</manifestclasspath>
+
+		<jar destfile="${project.build.dist}/${dist.jar.name}" basedir="${project.build.dist}"
+			excludes="**">
+			<manifest>
+				<attribute name="Built-By" value="${application.author}" />
+				<section name="common">
+					<attribute name="Specification-Title" value="${application.name}" />
+					<attribute name="Specification-Version" value="${application.release}" />
+					<attribute name="Specification-Vendor" value="${application.author}" />
+					<attribute name="Implementation-Title" value="${application.name}" />
+					<attribute name="Implementation-Version" value="${application.release} ${TODAY}" />
+				</section>
+				<attribute name="Main-Class" value="${main.class}" />
+				<attribute name="Class-Path" value="${jar.classpath}" />
+			</manifest>			
+			<fileset dir="${project.build}">
+				<include name="**" />
+				<exclude name="**/*Test.class" />
+				<exclude name="*.*" />
+				<exclude name="*.db" />
+				<exclude name="dist/" />
+				<exclude name="reports/" />
+			</fileset>						
+		</jar>		
+	</target>
+
+
+	<!-- currently not used -->
+	<target name="dist" depends="build,jar">
+		<property name="base.name" value="${ant.project.name}" />
+		<delete dir="release" />
+		<delete dir="dist" />
+		<mkdir dir="dist" />
+		<mkdir dir="release" />
+
+		<copy todir="release/config">
+			<fileset dir="config" includes="**" />
+		</copy>
+
+		<copy todir="release/templates">
+			<fileset dir="templates" includes="**" />
+		</copy>
+
+		<copy todir="release/help">
+			<fileset dir="help" includes="**" />
+		</copy>
+
+		<copy todir="release/lib">
+			<fileset dir="lib" includes="**/*.jar" />
+		</copy>
+
+		<copy todir="release/common_libs">
+			<fileset dir="common_libs" includes="**/*" />
+		</copy>
+
+		<copy todir="release" file="${project.build.dist}/${dist.jar.name}" />
+
+		<zip destfile="dist/${release.name}">
+			<zipfileset dir="release/" includes="**/*.*" />
+		</zip>
+		<delete dir="release" />
+	</target>
+
+</project>
