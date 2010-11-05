@@ -10,7 +10,7 @@ import java.util.Map.Entry;
  * @author Timoteo Ponce
  * 
  */
-public class RootSection extends Section {
+class RootSection extends Section {
 
 	private final Map<String, Section> sectionMap = new HashMap<String, Section>();
 

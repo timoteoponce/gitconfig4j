@@ -1,13 +1,23 @@
 package org.timo.gitconfig;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GitConfigImpl implements GitConfig {
+
+	private static final Logger LOG = Logger.getLogger(GitConfigImpl.class
+			.getName());
 
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
 
@@ -26,14 +36,13 @@ public class GitConfigImpl implements GitConfig {
 		for (Entry<String, RootSection> entry : rootSectionsMap.entrySet()) {
 			appendSection(builder, entry.getValue());
 		}
-
 		return builder.toString();
 	}
 
 	private void appendSection(final StringBuilder builder,
 			final RootSection section) {
 		if (!section.getVariables().isEmpty()) {
-			builder.append("[ " + section.getName() + " ] \n");
+			builder.append("[" + section.getName() + "] \n");
 		}
 		appendVariables(builder, section);
 		appendSubSections(builder, section);
@@ -50,8 +59,8 @@ public class GitConfigImpl implements GitConfig {
 	private void appendSubSections(final StringBuilder builder,
 			final RootSection rootSection) {
 		for (Section section : rootSection.getSections()) {
-			builder.append("[ " + rootSection.getName() + " '"
-					+ section.getName() + "' ] \n");
+			builder.append("[" + rootSection.getName() + " '"
+					+ section.getName() + "'] \n");
 			appendVariables(builder, section);
 		}
 	}
@@ -101,8 +110,65 @@ public class GitConfigImpl implements GitConfig {
 	}
 
 	@Override
-	public void readFromFile(final String filename) {
-		// TODO Auto-generated method stub
+	public void readFromFile(final String fileName)
+			throws FileNotFoundException {
+		FileReader fileReader;
+		BufferedReader bufferedReader;
+		try {
+			fileReader = new FileReader(fileName);
+			bufferedReader = new BufferedReader(fileReader);
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				line = line.trim();
+				if (line.length() > 0) {
+					final Section section = readSection(line);
+					readVariables(bufferedReader,section);
+				}
+			}
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+
+	private void readVariables(BufferedReader bufferedReader, Section section) throws IOException {
+		final StringBuilder variablesBuffer = new StringBuilder();
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
+			line = line.trim();
+			if(line.length() == 0 || line.startsWith("[")){
+				break;				
+			}
+			variablesBuffer.append(line+"\n");
+		}		
+		StringTokenizer tokenizer = new StringTokenizer(variablesBuffer.toString(),"\n=");
+		// variable = value
+		while(tokenizer.hasMoreTokens()){
+			final String key = tokenizer.nextToken().trim();
+			section.setVariable(key, tokenizer.nextToken().trim());
+		}
+	}
+
+	private Section readSection(final String line) {
+		LOG.info("Reading section from line : "+line);
+		if (line.startsWith("[") && line.endsWith("]")) {
+			String sectionName = line.substring(1,line.length()-1).trim();			
+			final boolean isSubSection = sectionName.contains("'");
+			// [ sectionName 'subSection' ]
+			Section section;
+			if(isSubSection){				
+				LOG.info("Reading subSection: "+sectionName);
+				RootSection rootSection = getOrCreateSection(sectionName.substring(0,sectionName.indexOf("'")-1).trim());
+				section = rootSection.getOrCreateSection(sectionName.substring(sectionName.indexOf("'"),sectionName.length()).trim());
+			}else{
+				LOG.info("Reading section: "+sectionName);
+				section = getOrCreateSection(sectionName);
+			}
+			return section;
+		} else {
+			throw new IllegalArgumentException(
+					"Unreadable section declaration [ sectionName *'subSectionName'] :"
+							+ line);
+		}
 	}
 
 	@Override
@@ -141,7 +207,7 @@ public class GitConfigImpl implements GitConfig {
 			final String key, final String value) {
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-		.getOrCreateSection(subSectionName);
+				.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -167,7 +233,17 @@ public class GitConfigImpl implements GitConfig {
 
 	}
 
-	public static void main(final String[] args) {
+	@Override
+	public Map<String, String> getVariables() {
+		return null;
+	}
+
+	@Override
+	public void clear() {
+		this.rootSectionsMap.clear();
+	}
+
+	public static void main(final String[] args) throws FileNotFoundException {
 		GitConfig config = new GitConfigImpl();
 		config.setValue("user.name", "Timoteo Ponce");
 		config.setValue("user.email", "timo.slack@gmail.com");
@@ -176,7 +252,19 @@ public class GitConfigImpl implements GitConfig {
 		config.setValue("source.config.path", "/opt/projects");
 		config.setValue("source.config.owner", "Hugo Ponce");
 
-		System.out.println(config.getTextContent());
+		final String text = config.getTextContent();
+		LOG.info(text);
+
+		StringTokenizer tokenizer = new StringTokenizer(text,"' \t\n\r\f");
+		while (tokenizer.hasMoreTokens()) {
+			LOG.info("token: " + tokenizer.nextToken());
+		}
+
+		LOG.info(config.getKeySet().toString());
+		
+		config.clear();
+		config.readFromFile("resources/config-1");
+		LOG.info(config.getTextContent());
 	}
 
 }

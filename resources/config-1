@@ -1,0 +1,21 @@
+[core]  
+        autocrlf = false
+		excludesfile = /Users/timoteo/.gitignore
+		editor = emacs		
+	
+[alias]
+        last = cat-file commit HEAD
+		
+[user]
+        name = Timoteo Ponce
+		email = timoteo.ponce@swissbytes.ch
+
+[color]
+        diff = auto
+		status = auto
+		branch = auto
+		interactive = auto		
+
+[remote "origin"]
+        url = http://git.kernel.org/pub/scm/git/git.git
+		fetch = +refs/heads/*:refs/remotes/origin/*

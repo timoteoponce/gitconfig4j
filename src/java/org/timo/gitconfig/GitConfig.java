@@ -1,13 +1,15 @@
 package org.timo.gitconfig;
 
+import java.io.FileNotFoundException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Timoteo Ponce
  * 
  */
-public interface GitConfig {
+public interface GitConfig{
 
 	String getValue(String composedKey);
 
@@ -22,6 +24,8 @@ public interface GitConfig {
 	Collection<String> getValues();
 
 	Collection<String> getValues(String composedKey);
+	
+	Map<String,String> getVariables();
 
 	void removeSection(String sectionName);
 
@@ -31,8 +35,10 @@ public interface GitConfig {
 
 	String getTextContent();
 
-	void writeFile(String filename);
+	void writeFile(String fileName);
 
-	void readFromFile(String filename);
+	void readFromFile(String fileName)throws FileNotFoundException;
+	
+	void clear();
 
 }
