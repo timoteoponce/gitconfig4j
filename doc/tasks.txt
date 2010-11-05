@@ -1,0 +1,14 @@
+Tasks
+-------
+
+	- Definition of file format syntax
+		- Structure
+		- Sections
+		- Sub-sections
+	* Status: Pending
+	
+	- Definition of goals and limitations		 
+	* Status: Pending
+	
+	- Description of fail situations
+	* Status: Pending 
