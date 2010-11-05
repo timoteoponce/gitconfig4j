@@ -3,6 +3,7 @@ package org.timo.gitconfig;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,9 +15,9 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GitConfigImpl implements GitConfig {
+public class GitConfiguration implements Configuration {
 
-	private static final Logger LOG = Logger.getLogger(GitConfigImpl.class
+	private static final Logger LOG = Logger.getLogger(GitConfiguration.class
 			.getName());
 
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
@@ -51,8 +52,11 @@ public class GitConfigImpl implements GitConfig {
 	private void appendVariables(final StringBuilder builder,
 			final Section section) {
 		for (Entry<String, String> entry : section.getVariables().entrySet()) {
-			builder.append("\t " + entry.getKey() + " = " + entry.getValue()
+			builder.append("\t\t " + entry.getKey() + " = " + entry.getValue()
 					+ "\n");
+		}
+		if (section.getVariables().size() > 0) {
+			builder.append("\n");
 		}
 	}
 
@@ -84,7 +88,8 @@ public class GitConfigImpl implements GitConfig {
 		return composedKey.split("\\.");
 	}
 
-	private String getValue(final String sectionName,
+	@Override
+	public String getValue(final String sectionName,
 			final String subSectionName, final String key) {
 		RootSection rootSection = rootSectionsMap.get(sectionName);
 		Section subSection = rootSection.getSection(subSectionName);
@@ -112,8 +117,8 @@ public class GitConfigImpl implements GitConfig {
 	@Override
 	public void readFromFile(final String fileName)
 			throws FileNotFoundException {
-		FileReader fileReader;
-		BufferedReader bufferedReader;
+		FileReader fileReader = null;
+		BufferedReader bufferedReader = null;
 		try {
 			fileReader = new FileReader(fileName);
 			bufferedReader = new BufferedReader(fileReader);
@@ -122,45 +127,59 @@ public class GitConfigImpl implements GitConfig {
 				line = line.trim();
 				if (line.length() > 0) {
 					final Section section = readSection(line);
-					readVariables(bufferedReader,section);
+					readVariables(bufferedReader, section);
 				}
 			}
 		} catch (IOException e) {
 			LOG.log(Level.SEVERE, e.getMessage(), e);
+		} finally {
+			try {
+				if (bufferedReader != null) {
+					bufferedReader.close();
+					fileReader.close();
+				}
+			} catch (IOException e) {
+				LOG.info("Swallowing exception : " + e.getMessage());
+			}
 		}
 	}
 
-	private void readVariables(BufferedReader bufferedReader, Section section) throws IOException {
+	private void readVariables(BufferedReader bufferedReader, Section section)
+			throws IOException {
 		final StringBuilder variablesBuffer = new StringBuilder();
 		String line;
 		while ((line = bufferedReader.readLine()) != null) {
 			line = line.trim();
-			if(line.length() == 0 || line.startsWith("[")){
-				break;				
+			if (line.length() == 0 || line.startsWith("[")) {
+				break;
 			}
-			variablesBuffer.append(line+"\n");
-		}		
-		StringTokenizer tokenizer = new StringTokenizer(variablesBuffer.toString(),"\n=");
+			variablesBuffer.append(line + "\n");
+		}
 		// variable = value
-		while(tokenizer.hasMoreTokens()){
+		final StringTokenizer tokenizer = new StringTokenizer(variablesBuffer
+				.toString(), "\n=");
+
+		while (tokenizer.hasMoreTokens()) {
 			final String key = tokenizer.nextToken().trim();
 			section.setVariable(key, tokenizer.nextToken().trim());
 		}
 	}
 
 	private Section readSection(final String line) {
-		LOG.info("Reading section from line : "+line);
+		LOG.info("Reading section from line : " + line);
 		if (line.startsWith("[") && line.endsWith("]")) {
-			String sectionName = line.substring(1,line.length()-1).trim();			
+			String sectionName = line.substring(1, line.length() - 1).trim();
 			final boolean isSubSection = sectionName.contains("'");
 			// [ sectionName 'subSection' ]
 			Section section;
-			if(isSubSection){				
-				LOG.info("Reading subSection: "+sectionName);
-				RootSection rootSection = getOrCreateSection(sectionName.substring(0,sectionName.indexOf("'")-1).trim());
-				section = rootSection.getOrCreateSection(sectionName.substring(sectionName.indexOf("'"),sectionName.length()).trim());
-			}else{
-				LOG.info("Reading section: "+sectionName);
+			if (isSubSection) {
+				LOG.info("Reading subSection: " + sectionName);
+				RootSection rootSection = getOrCreateSection(sectionName
+						.substring(0, sectionName.indexOf("'") - 1).trim());
+				section = rootSection.getOrCreateSection(sectionName.substring(
+						sectionName.indexOf("'"), sectionName.length()).trim());
+			} else {
+				LOG.info("Reading section: " + sectionName);
 				section = getOrCreateSection(sectionName);
 			}
 			return section;
@@ -173,20 +192,76 @@ public class GitConfigImpl implements GitConfig {
 
 	@Override
 	public void remove(final String composedKey) {
-		// TODO Auto-generated method stub
+		final String[] keys = splitKeys(composedKey);
+		if (keys.length == 2) {
+			remove(keys[0], keys[1]);
+		} else {
+			remove(keys[0], keys[1], keys[2]);
+		}
+	}
 
+	@Override
+	public void remove(String sectionName, String key) {
+		final String[] keys = splitKeys(sectionName);
+		if (keys.length > 1) {
+			remove(keys[0], keys[1], key);
+		} else {
+			rootSectionsMap.remove(sectionName);
+		}
+	}
+
+	@Override
+	public void remove(String sectionName, String subSectionName, String key) {
+		RootSection rootSection = rootSectionsMap.get(sectionName);
+		if (rootSection != null
+				&& rootSection.getSection(subSectionName) != null) {
+			Section section = rootSection.getSection(subSectionName);
+			section.removeVariable(key);
+		}
 	}
 
 	@Override
 	public void removeSection(final String sectionName) {
-		// TODO Auto-generated method stub
+		final String[] keys = splitKeys(sectionName);
+		if (keys.length == 2) {
+			removeSection(keys[0], keys[1]);
+		} else {
+			rootSectionsMap.remove(sectionName);
+		}
+	}
 
+	@Override
+	public void removeSection(String sectionName, String subSection) {
+		RootSection rootSection = rootSectionsMap.get(sectionName);
+		rootSection.removeSection(subSection);
 	}
 
 	@Override
 	public void renameSection(final String oldName, final String newName) {
-		// TODO Auto-generated method stub
+		final String[] keys = splitKeys(oldName);
+		if (keys.length > 1) {
+			renameSection(keys[0], keys[1], newName);
+		} else {
+			RootSection rootSection = rootSectionsMap.remove(oldName);
+			if (rootSection != null) {
+				rootSection.setName(newName);
+				LOG.info("Renaming section '" + oldName + "' to '" + newName
+						+ "'");
+				rootSectionsMap.put(newName, rootSection);
+			}
+		}
+	}
 
+	@Override
+	public void renameSection(String sectionName, String oldName, String newName) {
+		RootSection rootSection = rootSectionsMap.get(sectionName);
+		if (rootSection != null && rootSection.getSection(oldName) != null) {
+			LOG.info("Renaming sub-section '" + sectionName + "." + oldName
+					+ "' to '" + newName + "'");
+			Section section = rootSection.removeSection(oldName);
+			section.setName(newName);
+			rootSection.setSection(section);
+		}
 	}
 
 	@Override
@@ -228,9 +303,22 @@ public class GitConfigImpl implements GitConfig {
 	}
 
 	@Override
-	public void writeFile(final String filename) {
-		// TODO Auto-generated method stub
-
+	public void writeFile(final String fileName) {
+		FileWriter fileWriter = null;
+		try {
+			fileWriter = new FileWriter(fileName);
+			fileWriter.append(getTextContent());
+		} catch (IOException e) {
+			LOG.info("Swallowing IO exception : " + e.getMessage());
+		} finally {
+			try {
+				if (fileWriter != null) {
+					fileWriter.close();
+				}
+			} catch (IOException e) {
+				LOG.info("Swallowing IO exception : " + e.getMessage());
+			}
+		}
 	}
 
 	@Override
@@ -244,7 +332,7 @@ public class GitConfigImpl implements GitConfig {
 	}
 
 	public static void main(final String[] args) throws FileNotFoundException {
-		GitConfig config = new GitConfigImpl();
+		Configuration config = new GitConfiguration();
 		config.setValue("user.name", "Timoteo Ponce");
 		config.setValue("user.email", "timo.slack@gmail.com");
 		config.setValue("merge.tool.command", "merge");
@@ -252,16 +340,15 @@ public class GitConfigImpl implements GitConfig {
 		config.setValue("source.config.path", "/opt/projects");
 		config.setValue("source.config.owner", "Hugo Ponce");
 
-		final String text = config.getTextContent();
-		LOG.info(text);
-
-		StringTokenizer tokenizer = new StringTokenizer(text,"' \t\n\r\f");
-		while (tokenizer.hasMoreTokens()) {
-			LOG.info("token: " + tokenizer.nextToken());
-		}
+		LOG.info(config.getTextContent());
+		config.renameSection("source", "project");
+		config.renameSection("merge.tool", "externalTool");
+		LOG.info(config.getTextContent());
 
 		LOG.info(config.getKeySet().toString());
-		
+
+		config.writeFile("resources/config-2");
+
 		config.clear();
 		config.readFromFile("resources/config-1");
 		LOG.info(config.getTextContent());

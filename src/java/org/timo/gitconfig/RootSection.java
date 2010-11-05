@@ -34,6 +34,10 @@ class RootSection extends Section {
 		}
 		return section;
 	}
+	
+	public Section removeSection(String subSectionName) {
+		return sectionMap.remove(subSectionName);
+	}
 
 	@Override
 	public Set<String> getKeySet() {
@@ -50,4 +54,6 @@ class RootSection extends Section {
 	public Collection<Section> getSections() {
 		return sectionMap.values();
 	}
+
+	
 }

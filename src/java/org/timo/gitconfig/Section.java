@@ -12,7 +12,7 @@ import java.util.Map.Entry;
  */
 public class Section {
 
-	private final String name;
+	private String name;
 
 	private final Map<String, String> variables = new HashMap<String, String>();
 
@@ -32,8 +32,16 @@ public class Section {
 		return name;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public Map<String, String> getVariables() {
 		return variables;
+	}
+
+	public void removeVariable(String key) {
+		variables.remove(key);
 	}
 
 	public Set<String> getKeySet() {
