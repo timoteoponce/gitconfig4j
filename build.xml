@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="git-like-config" default="build" basedir=".">	
+<project name="git-like-config" default="build" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
 	<description>GIT like configuration management, Juan Timoteo Ponce Ortiz.</description>
 
 	<property file="build.properties" />
 
 	<path id="compile.classpath">
-		<fileset dir="lib" includes="*.jar" />		
+		<fileset dir="${lib.dir}" includes="*.jar" />
 	</path>
 
 	<path id="src.path">
@@ -29,21 +29,18 @@
 		<mkdir dir="${project.resources}" />
 		<mkdir dir="${project.src}" />
 		<mkdir dir="${project.test}" />
-		<mkdir dir="${project.lib}" />
+		<mkdir dir="${lib.dir}" />
 	</target>
 
-	<target name="compile-test" depends="compile">
-		<javac encoding="iso-8859-1" destdir="${project.build}" classpathref="test.classpath" includes="**/*.java" debug="true">
-			<src path="${project.test}" />
-		</javac>
-	</target>
-
-
-	<target name="prepare" depends="init">
+	<target name="prepare" depends="init,resolve">
 		<mkdir dir="${project.build}" />
 	</target>
 
-	<target name="build" depends="compile,init" description="Build the project incrementally.">
+	<target name="resolve" description="--> retreive dependencies with ivy">
+		<ivy:retrieve />
+	</target>
+
+	<target name="build" depends="compile,test" description="Build the project incrementally.">
 	</target>
 
 	<target name="clean">
@@ -65,6 +62,11 @@
 		</javac>
 	</target>
 
+	<target name="compile-test" depends="compile">
+		<javac encoding="iso-8859-1" destdir="${project.build}" classpathref="test.classpath" includes="**/*.java" debug="true">
+			<src path="${project.test}" />
+		</javac>
+	</target>
 
 	<target name="jar" depends="build" description="Build a distribution jar file">
 		<delete dir="${project.build.dist}" />
@@ -74,7 +76,7 @@
 			<fileset dir="lib" includes="*.jar" />
 			<fileset refid="mvn.classpath" />
 		</copy>
-		
+
 		<copy todir="${project.build.dist}/config">
 			<fileset dir="${project.config}" includes="*" />
 		</copy>
@@ -86,11 +88,11 @@
 		<copy todir="${project.build.dist}/database">
 			<fileset dir="${basedir}/database" includes="*.db" />
 		</copy>
-		
+
 		<path id="jar.lib.classpath">
 			<fileset dir="${project.build.dist}/lib">
 				<include name="**/*.jar" />
-			</fileset>			
+			</fileset>
 			<pathelement location="${project.build.dist}/config" />
 			<pathelement location="${project.build.dist}/resources" />
 		</path>
@@ -99,8 +101,7 @@
 			<classpath refid="jar.lib.classpath" />
 		</manifestclasspath>
 
-		<jar destfile="${project.build.dist}/${dist.jar.name}" basedir="${project.build.dist}"
-			excludes="**">
+		<jar destfile="${project.build.dist}/${dist.jar.name}" basedir="${project.build.dist}" excludes="**">
 			<manifest>
 				<attribute name="Built-By" value="${application.author}" />
 				<section name="common">
@@ -112,7 +113,7 @@
 				</section>
 				<attribute name="Main-Class" value="${main.class}" />
 				<attribute name="Class-Path" value="${jar.classpath}" />
-			</manifest>			
+			</manifest>
 			<fileset dir="${project.build}">
 				<include name="**" />
 				<exclude name="**/*Test.class" />
@@ -120,10 +121,32 @@
 				<exclude name="*.db" />
 				<exclude name="dist/" />
 				<exclude name="reports/" />
-			</fileset>						
-		</jar>		
+			</fileset>
+		</jar>
 	</target>
 
+	<target name="test" depends="compile-test">
+		<property name="junit.dest" value="${project.build.report}/junit" />
+		<mkdir dir="${junit.dest}" />
+
+		<junit fork="yes" forkmode="once" printsummary="yes" haltonfailure="yes">
+			<jvmarg value="-Dcurrent.env=test" />
+			<classpath>
+				<path refid="test.classpath" />
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest todir="${junit.dest}">
+				<fileset dir="${project.test}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+		<junitreport todir="${junit.dest}">
+			<fileset dir="${junit.dest}" includes="TEST-*.xml" />
+			<report format="frames" todir="${junit.dest}" />
+		</junitreport>
+	</target>
 
 	<!-- currently not used -->
 	<target name="dist" depends="build,jar">
