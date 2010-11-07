@@ -72,11 +72,6 @@
 		<delete dir="${project.build.dist}" />
 		<mkdir dir="${project.build.dist}" />
 
-		<copy todir="${project.build.dist}/lib">
-			<fileset dir="lib" includes="*.jar" />
-			<fileset refid="mvn.classpath" />
-		</copy>
-
 		<copy todir="${project.build.dist}/config">
 			<fileset dir="${project.config}" includes="*" />
 		</copy>
@@ -84,22 +79,6 @@
 		<copy todir="${project.build.dist}/resources">
 			<fileset dir="${project.resources}" includes="**/*" />
 		</copy>
-
-		<copy todir="${project.build.dist}/database">
-			<fileset dir="${basedir}/database" includes="*.db" />
-		</copy>
-
-		<path id="jar.lib.classpath">
-			<fileset dir="${project.build.dist}/lib">
-				<include name="**/*.jar" />
-			</fileset>
-			<pathelement location="${project.build.dist}/config" />
-			<pathelement location="${project.build.dist}/resources" />
-		</path>
-
-		<manifestclasspath property="jar.classpath" jarfile="${project.build.dist}/${dist.jar.name}">
-			<classpath refid="jar.lib.classpath" />
-		</manifestclasspath>
 
 		<jar destfile="${project.build.dist}/${dist.jar.name}" basedir="${project.build.dist}" excludes="**">
 			<manifest>
@@ -109,20 +88,26 @@
 					<attribute name="Specification-Version" value="${application.release}" />
 					<attribute name="Specification-Vendor" value="${application.author}" />
 					<attribute name="Implementation-Title" value="${application.name}" />
-					<attribute name="Implementation-Version" value="${application.release} ${TODAY}" />
+					<attribute name="Implementation-Version" value="${application.release}" />
 				</section>
 				<attribute name="Main-Class" value="${main.class}" />
-				<attribute name="Class-Path" value="${jar.classpath}" />
 			</manifest>
 			<fileset dir="${project.build}">
 				<include name="**" />
 				<exclude name="**/*Test.class" />
 				<exclude name="*.*" />
-				<exclude name="*.db" />
 				<exclude name="dist/" />
-				<exclude name="reports/" />
+				<exclude name="report/" />
 			</fileset>
 		</jar>
+	</target>
+
+	<target name="dist" depends="jar">
+		<delete dir="${project.dist}" />
+		<mkdir dir="${project.dist}" />
+		<zip destfile="${project.dist}/${release.name}">
+			<zipfileset dir="${project.build.dist}"/>
+		</zip>		
 	</target>
 
 	<target name="test" depends="compile-test">
@@ -146,42 +131,6 @@
 			<fileset dir="${junit.dest}" includes="TEST-*.xml" />
 			<report format="frames" todir="${junit.dest}" />
 		</junitreport>
-	</target>
-
-	<!-- currently not used -->
-	<target name="dist" depends="build,jar">
-		<property name="base.name" value="${ant.project.name}" />
-		<delete dir="release" />
-		<delete dir="dist" />
-		<mkdir dir="dist" />
-		<mkdir dir="release" />
-
-		<copy todir="release/config">
-			<fileset dir="config" includes="**" />
-		</copy>
-
-		<copy todir="release/templates">
-			<fileset dir="templates" includes="**" />
-		</copy>
-
-		<copy todir="release/help">
-			<fileset dir="help" includes="**" />
-		</copy>
-
-		<copy todir="release/lib">
-			<fileset dir="lib" includes="**/*.jar" />
-		</copy>
-
-		<copy todir="release/common_libs">
-			<fileset dir="common_libs" includes="**/*" />
-		</copy>
-
-		<copy todir="release" file="${project.build.dist}/${dist.jar.name}" />
-
-		<zip destfile="dist/${release.name}">
-			<zipfileset dir="release/" includes="**/*.*" />
-		</zip>
-		<delete dir="release" />
 	</target>
 
 </project>
