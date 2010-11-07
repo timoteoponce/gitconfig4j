@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * {@link Properties}-like component allowing a configuration structure:
@@ -34,7 +35,7 @@ import java.util.Set;
  * @author Timoteo Ponce
  * 
  */
-public interface Configuration {
+public interface Configuration extends Iterable<Entry<String, String>>{
 
 	/**
 	 * @param composedKey

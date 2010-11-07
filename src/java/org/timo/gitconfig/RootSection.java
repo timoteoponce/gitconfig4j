@@ -2,6 +2,7 @@ package org.timo.gitconfig;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -19,6 +20,10 @@ class RootSection extends Section {
 	}
 
 	public void setSection(final Section section) {
+		if (section instanceof RootSection) {
+			throw new IllegalArgumentException(
+			"Nested RootSections are not supported.");
+		}
 		sectionMap.put(section.getName(), section);
 	}
 
@@ -34,26 +39,64 @@ class RootSection extends Section {
 		}
 		return section;
 	}
-	
-	public Section removeSection(String subSectionName) {
+
+	public Section removeSection(final String subSectionName) {
 		return sectionMap.remove(subSectionName);
 	}
 
 	@Override
 	public Set<String> getKeySet() {
-		final Set<String> keySet = super.getKeySet();
-		for (Entry<String, Section> entry : sectionMap.entrySet()) {
-			Set<String> sectionKeySet = entry.getValue().getKeySet();
+		final Set<String> keySet = getLocalizedKeySet();
+		for (Section subSection : sectionMap.values()) {
+			Set<String> sectionKeySet = subSection.getKeySet();
 			for (String sectionKey : sectionKeySet) {
-				keySet.add(getName() + "." + sectionKey);
+				keySet.add(getName() + "." + subSection.getName() + "."
+						+ sectionKey);
 			}
 		}
 		return keySet;
+	}
+
+	private Set<String> getLocalizedKeySet() {
+		final Set<String> keySet = new HashSet<String>();
+		for (String key : super.getKeySet()) {
+			keySet.add(getName() + "." + key);
+		}
+		return keySet;
+	}
+
+	@Override
+	public Map<String, String> getVariables() {
+		final Map<String, String> variables = getLocalizedVariables();
+		for (Section subSection : sectionMap.values()) {
+			for (Entry<String, String> subVar : subSection.getVariables()
+					.entrySet()) {
+				variables.put(getName() + "." + subSection.getName() + "."
+						+ subVar.getKey(), subVar.getValue());
+			}
+		}
+		return variables;
+	}
+
+	private Map<String, String> getLocalizedVariables() {
+		final Map<String, String> variables = new HashMap<String, String>();
+		for (Entry<String, String> var : super.getVariables().entrySet()) {
+			variables.put(getName() + "." + var.getKey(), var.getValue());
+		}
+		return variables;
+	}
+
+	@Override
+	public Collection<String> getValues() {
+		final Collection<String> values = super.getValues();
+		for (Section subSection : sectionMap.values()) {
+			values.addAll(subSection.getValues());
+		}
+		return values;
 	}
 
 	public Collection<Section> getSections() {
 		return sectionMap.values();
 	}
 
-	
 }

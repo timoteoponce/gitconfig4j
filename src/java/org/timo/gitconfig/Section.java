@@ -1,10 +1,9 @@
 package org.timo.gitconfig;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * @author Timoteo Ponce
@@ -32,24 +31,30 @@ public class Section {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
 	public Map<String, String> getVariables() {
-		return variables;
+		final Map<String, String> outputVars = new HashMap<String, String>(
+				variables);
+		return outputVars;
 	}
 
-	public void removeVariable(String key) {
+	public void removeVariable(final String key) {
 		variables.remove(key);
 	}
 
 	public Set<String> getKeySet() {
-		final Set<String> keySet = new HashSet<String>();
-		for (Entry<String, String> entry : variables.entrySet()) {
-			keySet.add(name + "." + entry.getKey());
-		}
-		return keySet;
+		return variables.keySet();
+	}
+
+	public boolean isEmpty() {
+		return variables.isEmpty();
+	}
+
+	public Collection<String> getValues() {
+		return variables.values();
 	}
 
 	@Override

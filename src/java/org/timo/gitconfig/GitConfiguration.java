@@ -5,15 +5,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GitConfiguration implements Configuration {
 
@@ -22,36 +26,57 @@ public class GitConfiguration implements Configuration {
 
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getKeySet()
+	 */
 	@Override
 	public Set<String> getKeySet() {
 		final Set<String> keySet = new HashSet<String>();
-		for (Entry<String, RootSection> entry : rootSectionsMap.entrySet()) {
+		for (final Entry<String, RootSection> entry : rootSectionsMap
+				.entrySet()) {
 			keySet.addAll(entry.getValue().getKeySet());
 		}
 		return keySet;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getTextContent()
+	 */
 	@Override
 	public String getTextContent() {
 		final StringBuilder builder = new StringBuilder();
-		for (Entry<String, RootSection> entry : rootSectionsMap.entrySet()) {
+		for (final Entry<String, RootSection> entry : rootSectionsMap
+				.entrySet()) {
 			appendSection(builder, entry.getValue());
 		}
 		return builder.toString();
 	}
 
+	/**
+	 * @param builder
+	 * @param rootSection
+	 */
 	private void appendSection(final StringBuilder builder,
-			final RootSection section) {
-		if (!section.getVariables().isEmpty()) {
-			builder.append("[" + section.getName() + "] \n");
+			final RootSection rootSection) {
+		if (!rootSection.isEmpty()) {
+			builder.append("[" + rootSection.getName() + "] \n");
 		}
-		appendVariables(builder, section);
-		appendSubSections(builder, section);
+		appendVariables(builder, rootSection);
+		appendSubSections(builder, rootSection);
 	}
 
+	/**
+	 * @param builder
+	 * @param section
+	 */
 	private void appendVariables(final StringBuilder builder,
 			final Section section) {
-		for (Entry<String, String> entry : section.getVariables().entrySet()) {
+		for (final Entry<String, String> entry : section.getVariables()
+				.entrySet()) {
 			builder.append("\t\t " + entry.getKey() + " = " + entry.getValue()
 					+ "\n");
 		}
@@ -60,15 +85,24 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/**
+	 * @param builder
+	 * @param rootSection
+	 */
 	private void appendSubSections(final StringBuilder builder,
 			final RootSection rootSection) {
-		for (Section section : rootSection.getSections()) {
+		for (final Section section : rootSection.getSections()) {
 			builder.append("[" + rootSection.getName() + " '"
 					+ section.getName() + "'] \n");
 			appendVariables(builder, section);
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getValue(java.lang.String)
+	 */
 	@Override
 	public String getValue(final String composedKey) {
 		final String[] keys = splitKeys(composedKey);
@@ -76,47 +110,84 @@ public class GitConfiguration implements Configuration {
 			throw new IllegalArgumentException("Invalid variable key : "
 					+ composedKey);
 		}
-		final String section = keys[0];
+		final String rootSection = keys[0];
 		if (keys.length > 2) {
-			return getValue(section, keys[1], keys[2]);
+			return getValue(rootSection, keys[1], keys[2]);
 		} else {
-			return getValue(section, keys[1]);
+			return getValue(rootSection, keys[1]);
 		}
 	}
 
+	/**
+	 * @param composedKey
+	 * @return
+	 */
 	private String[] splitKeys(final String composedKey) {
 		return composedKey.split("\\.");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getValue(java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
 	@Override
 	public String getValue(final String sectionName,
 			final String subSectionName, final String key) {
-		RootSection rootSection = rootSectionsMap.get(sectionName);
-		Section subSection = rootSection.getSection(subSectionName);
+		final RootSection rootSection = rootSectionsMap.get(sectionName);
+		final Section subSection = rootSection.getSection(subSectionName);
 		return subSection.getVariable(key);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getValue(java.lang.String,
+	 * java.lang.String)
+	 */
 	@Override
 	public String getValue(final String sectionName, final String key) {
-		RootSection rootSection = rootSectionsMap.get(sectionName);
+		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		return rootSection.getVariable(key);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getValues()
+	 */
 	@Override
 	public Collection<String> getValues() {
-		// TODO Auto-generated method stub
-		return null;
+		final Collection<String> values = new ArrayList<String>();
+		for (final RootSection rootSection : rootSectionsMap.values()) {
+			values.addAll(rootSection.getValues());
+		}
+		return values;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getValues(java.lang.String)
+	 */
 	@Override
 	public Collection<String> getValues(final String composedKey) {
-		// TODO Auto-generated method stub
-		return null;
+		final Collection<String> values = new ArrayList<String>();
+		for (final RootSection rootSection : rootSectionsMap.values()) {
+			values.addAll(rootSection.getValues());
+		}
+		return values;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#readFromFile(java.lang.String)
+	 */
 	@Override
 	public void readFromFile(final String fileName)
-			throws FileNotFoundException {
+	throws FileNotFoundException {
 		FileReader fileReader = null;
 		BufferedReader bufferedReader = null;
 		try {
@@ -130,7 +201,7 @@ public class GitConfiguration implements Configuration {
 					readVariables(bufferedReader, section);
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			LOG.log(Level.SEVERE, e.getMessage(), e);
 		} finally {
 			try {
@@ -138,14 +209,19 @@ public class GitConfiguration implements Configuration {
 					bufferedReader.close();
 					fileReader.close();
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				LOG.info("Swallowing exception : " + e.getMessage());
 			}
 		}
 	}
 
-	private void readVariables(BufferedReader bufferedReader, Section section)
-			throws IOException {
+	/**
+	 * @param bufferedReader
+	 * @param section
+	 * @throws IOException
+	 */
+	private void readVariables(final BufferedReader bufferedReader,
+			final Section section) throws IOException {
 		final StringBuilder variablesBuffer = new StringBuilder();
 		String line;
 		while ((line = bufferedReader.readLine()) != null) {
@@ -165,19 +241,27 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/**
+	 * @param line
+	 * @return
+	 */
 	private Section readSection(final String line) {
 		LOG.info("Reading section from line : " + line);
 		if (line.startsWith("[") && line.endsWith("]")) {
-			String sectionName = line.substring(1, line.length() - 1).trim();
-			final boolean isSubSection = sectionName.contains("'");
+			final Pattern pattern = Pattern.compile("(\\w)*[^\\s'\"\\[\\]]");
+			final Matcher matcher = pattern.matcher(line);
+			matcher.find();
+			final String sectionName = matcher.group().trim();
+
+			final boolean isSubSection = matcher.find();
 			// [ sectionName 'subSection' ]
 			Section section;
 			if (isSubSection) {
-				LOG.info("Reading subSection: " + sectionName);
-				RootSection rootSection = getOrCreateSection(sectionName
-						.substring(0, sectionName.indexOf("'") - 1).trim());
-				section = rootSection.getOrCreateSection(sectionName.substring(
-						sectionName.indexOf("'"), sectionName.length()).trim());
+				final String subSection = matcher.group().trim();
+				LOG.info("Reading subSection: " + sectionName + "->"
+						+ subSection);
+				final RootSection rootSection = getOrCreateSection(sectionName);
+				section = rootSection.getOrCreateSection(subSection);
 			} else {
 				LOG.info("Reading section: " + sectionName);
 				section = getOrCreateSection(sectionName);
@@ -186,10 +270,15 @@ public class GitConfiguration implements Configuration {
 		} else {
 			throw new IllegalArgumentException(
 					"Unreadable section declaration [ sectionName *'subSectionName'] :"
-							+ line);
+					+ line);
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#remove(java.lang.String)
+	 */
 	@Override
 	public void remove(final String composedKey) {
 		final String[] keys = splitKeys(composedKey);
@@ -200,8 +289,14 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#remove(java.lang.String,
+	 * java.lang.String)
+	 */
 	@Override
-	public void remove(String sectionName, String key) {
+	public void remove(final String sectionName, final String key) {
 		final String[] keys = splitKeys(sectionName);
 		if (keys.length > 1) {
 			remove(keys[0], keys[1], key);
@@ -210,12 +305,19 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#remove(java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
 	@Override
-	public void remove(String sectionName, String subSectionName, String key) {
-		RootSection rootSection = rootSectionsMap.get(sectionName);
+	public void remove(final String sectionName, final String subSectionName,
+			final String key) {
+		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		if (rootSection != null
 				&& rootSection.getSection(subSectionName) != null) {
-			Section section = rootSection.getSection(subSectionName);
+			final Section section = rootSection.getSection(subSectionName);
 			section.removeVariable(key);
 		}
 	}
@@ -231,8 +333,8 @@ public class GitConfiguration implements Configuration {
 	}
 
 	@Override
-	public void removeSection(String sectionName, String subSection) {
-		RootSection rootSection = rootSectionsMap.get(sectionName);
+	public void removeSection(final String sectionName, final String subSection) {
+		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		rootSection.removeSection(subSection);
 	}
 
@@ -242,7 +344,7 @@ public class GitConfiguration implements Configuration {
 		if (keys.length > 1) {
 			renameSection(keys[0], keys[1], newName);
 		} else {
-			RootSection rootSection = rootSectionsMap.remove(oldName);
+			final RootSection rootSection = rootSectionsMap.remove(oldName);
 			if (rootSection != null) {
 				rootSection.setName(newName);
 				LOG.info("Renaming section '" + oldName + "' to '" + newName
@@ -253,12 +355,13 @@ public class GitConfiguration implements Configuration {
 	}
 
 	@Override
-	public void renameSection(String sectionName, String oldName, String newName) {
-		RootSection rootSection = rootSectionsMap.get(sectionName);
+	public void renameSection(final String sectionName, final String oldName,
+			final String newName) {
+		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		if (rootSection != null && rootSection.getSection(oldName) != null) {
 			LOG.info("Renaming sub-section '" + sectionName + "." + oldName
 					+ "' to '" + newName + "'");
-			Section section = rootSection.removeSection(oldName);
+			final Section section = rootSection.removeSection(oldName);
 			section.setName(newName);
 			rootSection.setSection(section);
 		}
@@ -282,7 +385,7 @@ public class GitConfiguration implements Configuration {
 			final String key, final String value) {
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-				.getOrCreateSection(subSectionName);
+		.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -308,14 +411,14 @@ public class GitConfiguration implements Configuration {
 		try {
 			fileWriter = new FileWriter(fileName);
 			fileWriter.append(getTextContent());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			LOG.info("Swallowing IO exception : " + e.getMessage());
 		} finally {
 			try {
 				if (fileWriter != null) {
 					fileWriter.close();
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				LOG.info("Swallowing IO exception : " + e.getMessage());
 			}
 		}
@@ -323,7 +426,11 @@ public class GitConfiguration implements Configuration {
 
 	@Override
 	public Map<String, String> getVariables() {
-		return null;
+		final Map<String, String> variables = new HashMap<String, String>();
+		for (final RootSection rootSection : rootSectionsMap.values()) {
+			variables.putAll(rootSection.getVariables());
+		}
+		return variables;
 	}
 
 	@Override
@@ -331,8 +438,14 @@ public class GitConfiguration implements Configuration {
 		this.rootSectionsMap.clear();
 	}
 
+	@Override
+	public Iterator<Entry<String, String>> iterator() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
 	public static void main(final String[] args) throws FileNotFoundException {
-		Configuration config = new GitConfiguration();
+		final Configuration config = new GitConfiguration();
 		config.setValue("user.name", "Timoteo Ponce");
 		config.setValue("user.email", "timo.slack@gmail.com");
 		config.setValue("merge.tool.command", "merge");
@@ -352,6 +465,12 @@ public class GitConfiguration implements Configuration {
 		config.clear();
 		config.readFromFile("resources/config-1");
 		LOG.info(config.getTextContent());
+
+		LOG.info("keySet :" + config.getKeySet());
+
+		LOG.info("values :" + config.getValues());
+
+		LOG.info("variables :" + config.getVariables());
 	}
 
 }
