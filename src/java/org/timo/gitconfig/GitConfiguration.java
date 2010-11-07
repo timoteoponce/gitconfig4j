@@ -26,6 +26,9 @@ public class GitConfiguration implements Configuration {
 
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
 
+	private static final Pattern SECTION_PATTERN = Pattern
+	.compile("(\\w)*[^\\s'\"\\[\\]]");
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -258,9 +261,8 @@ public class GitConfiguration implements Configuration {
 	private Section readSection(final String line) {
 		LOG.info("Reading section from line : " + line);
 		if (line.startsWith("[") && line.endsWith("]")) {
-			final Pattern pattern = Pattern.compile("(\\w)*[^\\s'\"\\[\\]]");
-			final Matcher matcher = pattern.matcher(line);
-			matcher.find();
+			final Matcher matcher = SECTION_PATTERN.matcher(line);
+			matcher.find();// find the first match
 			final String sectionName = matcher.group().trim();
 
 			final boolean isSubSection = matcher.find();

@@ -1,5 +1,6 @@
 package org.timo.gitconfig;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,9 +48,9 @@ class RootSection extends Section {
 	@Override
 	public Set<String> getKeySet() {
 		final Set<String> keySet = getLocalizedKeySet();
-		for (Section subSection : sectionMap.values()) {
-			Set<String> sectionKeySet = subSection.getKeySet();
-			for (String sectionKey : sectionKeySet) {
+		for (final Section subSection : sectionMap.values()) {
+			final Set<String> sectionKeySet = subSection.getKeySet();
+			for (final String sectionKey : sectionKeySet) {
 				keySet.add(getName() + "." + subSection.getName() + "."
 						+ sectionKey);
 			}
@@ -59,7 +60,7 @@ class RootSection extends Section {
 
 	private Set<String> getLocalizedKeySet() {
 		final Set<String> keySet = new HashSet<String>();
-		for (String key : super.getKeySet()) {
+		for (final String key : super.getKeySet()) {
 			keySet.add(getName() + "." + key);
 		}
 		return keySet;
@@ -68,8 +69,8 @@ class RootSection extends Section {
 	@Override
 	public Map<String, String> getVariables() {
 		final Map<String, String> variables = getLocalizedVariables();
-		for (Section subSection : sectionMap.values()) {
-			for (Entry<String, String> subVar : subSection.getVariables()
+		for (final Section subSection : sectionMap.values()) {
+			for (final Entry<String, String> subVar : subSection.getVariables()
 					.entrySet()) {
 				variables.put(getName() + "." + subSection.getName() + "."
 						+ subVar.getKey(), subVar.getValue());
@@ -80,7 +81,7 @@ class RootSection extends Section {
 
 	private Map<String, String> getLocalizedVariables() {
 		final Map<String, String> variables = new HashMap<String, String>();
-		for (Entry<String, String> var : super.getVariables().entrySet()) {
+		for (final Entry<String, String> var : super.getVariables().entrySet()) {
 			variables.put(getName() + "." + var.getKey(), var.getValue());
 		}
 		return variables;
@@ -88,8 +89,9 @@ class RootSection extends Section {
 
 	@Override
 	public Collection<String> getValues() {
-		final Collection<String> values = super.getValues();
-		for (Section subSection : sectionMap.values()) {
+		final Collection<String> values = new ArrayList<String>(super
+				.getValues());
+		for (final Section subSection : sectionMap.values()) {
 			values.addAll(subSection.getValues());
 		}
 		return values;
