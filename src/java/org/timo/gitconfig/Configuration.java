@@ -38,29 +38,51 @@ import java.util.Map.Entry;
 public interface Configuration extends Iterable<Entry<String, String>>{
 
 	/**
+	 * Retrieves a given variable value from configuration related to given
+	 * variable path.
+	 * 
 	 * @param composedKey
-	 * @return
+	 *            variable path. e.g. core.editor
+	 * @return value of variable or an empty string if not present
 	 */
 	String getValue(String composedKey);
 
 	/**
+	 * Retrieves a given variable value from configuration related to given
+	 * variable section and key.
+	 * 
 	 * @param sectionName
+	 *            section path. e.g. core.general
 	 * @param key
-	 * @return
+	 *            variable key
+	 * @return value of variable or an empty string if not present
 	 */
 	String getValue(String sectionName, String key);
 
 	/**
+	 * Retrieves a given variable value from configuration related to given
+	 * section, subSection and key.
+	 * 
 	 * @param sectionName
+	 *            variable section
 	 * @param subSectionName
+	 *            variable subSection
 	 * @param key
-	 * @return
+	 *            variable key
+	 * @return value of variable or an empty string if not present
 	 */
 	String getValue(String sectionName, String subSectionName, String key);
 
 	/**
+	 * Sets the value of a variable to given variable path. Null values are not
+	 * allowed and if they are passed a {@link NullPointerException} will be
+	 * raised.
+	 * 
 	 * @param composedKey
+	 *            variable path. e.g. core.user.name
 	 * @param value
+	 *            variable value
+	 * 
 	 */
 	void setValue(String composedKey, String value);
 
@@ -99,10 +121,11 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 
 	/**
 	 * Removes a complete configuration section that matches with given
-	 * sectionName. If section does not exists, nothings happens.
+	 * sectionName or subSection path. If section or subSection do not exist,
+	 * nothing happens.
 	 * 
 	 * @param sectionName
-	 *            name of the section to remove
+	 *            name of the section or subSection path to remove
 	 */
 	void removeSection(String sectionName);
 

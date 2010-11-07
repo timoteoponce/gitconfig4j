@@ -136,8 +136,14 @@ public class GitConfiguration implements Configuration {
 	public String getValue(final String sectionName,
 			final String subSectionName, final String key) {
 		final RootSection rootSection = rootSectionsMap.get(sectionName);
-		final Section subSection = rootSection.getSection(subSectionName);
-		return subSection.getVariable(key);
+		String value = "";
+		if (rootSection != null
+				&& rootSection.getSection(subSectionName) != null) {
+			final Section subSection = rootSection.getSection(subSectionName);
+			value = subSection.getVariable(key);
+		}
+
+		return value;
 	}
 
 	/*
@@ -149,7 +155,11 @@ public class GitConfiguration implements Configuration {
 	@Override
 	public String getValue(final String sectionName, final String key) {
 		final RootSection rootSection = rootSectionsMap.get(sectionName);
-		return rootSection.getVariable(key);
+		String value = "";
+		if (rootSection != null) {
+			value = rootSection.getVariable(key);
+		}
+		return value;
 	}
 
 	/*
@@ -322,6 +332,11 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#removeSection(java.lang.String)
+	 */
 	@Override
 	public void removeSection(final String sectionName) {
 		final String[] keys = splitKeys(sectionName);
@@ -332,12 +347,24 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#removeSection(java.lang.String,
+	 * java.lang.String)
+	 */
 	@Override
 	public void removeSection(final String sectionName, final String subSection) {
 		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		rootSection.removeSection(subSection);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#renameSection(java.lang.String,
+	 * java.lang.String)
+	 */
 	@Override
 	public void renameSection(final String oldName, final String newName) {
 		final String[] keys = splitKeys(oldName);
@@ -354,6 +381,12 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#renameSection(java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
 	@Override
 	public void renameSection(final String sectionName, final String oldName,
 			final String newName) {
@@ -367,6 +400,12 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#setValue(java.lang.String,
+	 * java.lang.String)
+	 */
 	@Override
 	public void setValue(final String composedKey, final String value) {
 		final String[] keys = splitKeys(composedKey);
@@ -381,8 +420,34 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#setValue(java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void setValue(final String sectionName, final String key,
+			final String value) {
+		if (value == null) {
+			throw new NullPointerException("Null values are not allowed");
+		}
+		final RootSection rootSection = getOrCreateSection(sectionName);
+		rootSection.setVariable(key, value);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#setValue(java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
 	public void setValue(final String sectionName, final String subSectionName,
 			final String key, final String value) {
+		if (value == null) {
+			throw new NullPointerException("Null values are not allowed");
+		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
 		.getOrCreateSection(subSectionName);
@@ -398,13 +463,11 @@ public class GitConfiguration implements Configuration {
 		return rootSection;
 	}
 
-	@Override
-	public void setValue(final String sectionName, final String key,
-			final String value) {
-		final RootSection rootSection = getOrCreateSection(sectionName);
-		rootSection.setVariable(key, value);
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#writeFile(java.lang.String)
+	 */
 	@Override
 	public void writeFile(final String fileName) {
 		FileWriter fileWriter = null;
