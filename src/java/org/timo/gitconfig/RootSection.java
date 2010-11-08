@@ -23,7 +23,7 @@ class RootSection extends Section {
 	public void setSection(final Section section) {
 		if (section instanceof RootSection) {
 			throw new IllegalArgumentException(
-			"Nested RootSections are not supported.");
+					"Nested RootSections are not supported.");
 		}
 		sectionMap.put(section.getName(), section);
 	}
@@ -45,8 +45,17 @@ class RootSection extends Section {
 		return sectionMap.remove(subSectionName);
 	}
 
-	@Override
-	public Set<String> getKeySet() {
+	/**
+	 * Returns all variables keys as variable paths. e.g.
+	 * 
+	 * <pre>
+	 * core.editor 
+	 * core.editor.command
+	 * </pre>
+	 * 
+	 * @return variables keys as variable paths. e.g. core.editor.command
+	 */
+	public Set<String> getAllKeySet() {
 		final Set<String> keySet = getLocalizedKeySet();
 		for (final Section subSection : sectionMap.values()) {
 			final Set<String> sectionKeySet = subSection.getKeySet();
@@ -66,8 +75,19 @@ class RootSection extends Section {
 		return keySet;
 	}
 
-	@Override
-	public Map<String, String> getVariables() {
+	/**
+	 * Returns all variables of section as a Map<Key,Value>. It will return all
+	 * variables keys as variable paths. e.g.
+	 * 
+	 * <pre>
+	 * core.editor = emacs
+	 * core.editor.command = /usr/bin/emacs
+	 * </pre>
+	 * 
+	 * @return Map containing all variables using their paths as keys e.g.
+	 *         core.editor = emacs
+	 */
+	public Map<String, String> getAllVariables() {
 		final Map<String, String> variables = getLocalizedVariables();
 		for (final Section subSection : sectionMap.values()) {
 			for (final Entry<String, String> subVar : subSection.getVariables()
@@ -87,8 +107,10 @@ class RootSection extends Section {
 		return variables;
 	}
 
-	@Override
-	public Collection<String> getValues() {
+	/**
+	 * @return
+	 */
+	public Collection<String> getAllValues() {
 		final Collection<String> values = new ArrayList<String>(super
 				.getValues());
 		for (final Section subSection : sectionMap.values()) {

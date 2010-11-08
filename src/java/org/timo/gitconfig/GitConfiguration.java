@@ -5,6 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +31,7 @@ public class GitConfiguration implements Configuration {
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
 
 	private static final Pattern SECTION_PATTERN = Pattern
-	.compile("(\\w)*[^\\s'\"\\[\\]]");
+			.compile("(\\w)*[^\\s'\"\\[\\]]");
 
 	/*
 	 * (non-Javadoc)
@@ -39,7 +43,7 @@ public class GitConfiguration implements Configuration {
 		final Set<String> keySet = new HashSet<String>();
 		for (final Entry<String, RootSection> entry : rootSectionsMap
 				.entrySet()) {
-			keySet.addAll(entry.getValue().getKeySet());
+			keySet.addAll(entry.getValue().getAllKeySet());
 		}
 		return keySet;
 	}
@@ -174,7 +178,7 @@ public class GitConfiguration implements Configuration {
 	public Collection<String> getValues() {
 		final Collection<String> values = new ArrayList<String>();
 		for (final RootSection rootSection : rootSectionsMap.values()) {
-			values.addAll(rootSection.getValues());
+			values.addAll(rootSection.getAllValues());
 		}
 		return values;
 	}
@@ -186,104 +190,8 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public Collection<String> getValues(final String composedKey) {
-		final Collection<String> values = new ArrayList<String>();
-		for (final RootSection rootSection : rootSectionsMap.values()) {
-			values.addAll(rootSection.getValues());
-		}
-		return values;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.timo.gitconfig.Configuration#readFromFile(java.lang.String)
-	 */
-	@Override
-	public void readFromFile(final String fileName)
-	throws FileNotFoundException {
-		FileReader fileReader = null;
-		BufferedReader bufferedReader = null;
-		try {
-			fileReader = new FileReader(fileName);
-			bufferedReader = new BufferedReader(fileReader);
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				line = line.trim();
-				if (line.length() > 0) {
-					final Section section = readSection(line);
-					readVariables(bufferedReader, section);
-				}
-			}
-		} catch (final IOException e) {
-			LOG.log(Level.SEVERE, e.getMessage(), e);
-		} finally {
-			try {
-				if (bufferedReader != null) {
-					bufferedReader.close();
-					fileReader.close();
-				}
-			} catch (final IOException e) {
-				LOG.info("Swallowing exception : " + e.getMessage());
-			}
-		}
-	}
-
-	/**
-	 * @param bufferedReader
-	 * @param section
-	 * @throws IOException
-	 */
-	private void readVariables(final BufferedReader bufferedReader,
-			final Section section) throws IOException {
-		final StringBuilder variablesBuffer = new StringBuilder();
-		String line;
-		while ((line = bufferedReader.readLine()) != null) {
-			line = line.trim();
-			if (line.length() == 0 || line.startsWith("[")) {
-				break;
-			}
-			variablesBuffer.append(line + "\n");
-		}
-		// variable = value
-		final StringTokenizer tokenizer = new StringTokenizer(variablesBuffer
-				.toString(), "\n=");
-
-		while (tokenizer.hasMoreTokens()) {
-			final String key = tokenizer.nextToken().trim();
-			section.setVariable(key, tokenizer.nextToken().trim());
-		}
-	}
-
-	/**
-	 * @param line
-	 * @return
-	 */
-	private Section readSection(final String line) {
-		LOG.info("Reading section from line : " + line);
-		if (line.startsWith("[") && line.endsWith("]")) {
-			final Matcher matcher = SECTION_PATTERN.matcher(line);
-			matcher.find();// find the first match
-			final String sectionName = matcher.group().trim();
-
-			final boolean isSubSection = matcher.find();
-			// [ sectionName 'subSection' ]
-			Section section;
-			if (isSubSection) {
-				final String subSection = matcher.group().trim();
-				LOG.info("Reading subSection: " + sectionName + "->"
-						+ subSection);
-				final RootSection rootSection = getOrCreateSection(sectionName);
-				section = rootSection.getOrCreateSection(subSection);
-			} else {
-				LOG.info("Reading section: " + sectionName);
-				section = getOrCreateSection(sectionName);
-			}
-			return section;
-		} else {
-			throw new IllegalArgumentException(
-					"Unreadable section declaration [ sectionName *'subSectionName'] :"
-					+ line);
-		}
+		//TODO
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -452,7 +360,7 @@ public class GitConfiguration implements Configuration {
 		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-		.getOrCreateSection(subSectionName);
+				.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -468,48 +376,176 @@ public class GitConfiguration implements Configuration {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.timo.gitconfig.Configuration#writeFile(java.lang.String)
+	 * @see org.timo.gitconfig.Configuration#load(java.lang.String)
 	 */
 	@Override
-	public void writeFile(final String fileName) {
-		FileWriter fileWriter = null;
+	public void load(final String fileName) throws IOException {
+		Reader reader = null;
+		BufferedReader bufferedReader = null;
 		try {
-			fileWriter = new FileWriter(fileName);
-			fileWriter.append(getTextContent());
-		} catch (final IOException e) {
-			LOG.info("Swallowing IO exception : " + e.getMessage());
+			reader = new FileReader(fileName);
+			bufferedReader = new BufferedReader(reader);
+			load(bufferedReader);
 		} finally {
-			try {
-				if (fileWriter != null) {
-					fileWriter.close();
-				}
-			} catch (final IOException e) {
-				LOG.info("Swallowing IO exception : " + e.getMessage());
+			if (bufferedReader != null) {
+				bufferedReader.close();
+				reader.close();
 			}
 		}
 	}
 
+	private void load(BufferedReader bufferedReader) throws IOException {
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
+			line = line.trim();
+			if (line.length() > 0) {
+				final Section section = readSection(line);
+				readVariables(bufferedReader, section);
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#load(java.io.InputStream)
+	 */
+	@Override
+	public void load(final InputStream inputStream) throws IOException {
+		Reader reader = null;
+		BufferedReader bufferedReader = null;
+		try {
+			reader = new InputStreamReader(inputStream);
+			bufferedReader = new BufferedReader(reader);
+			load(bufferedReader);
+		} finally {
+			if (bufferedReader != null) {
+				bufferedReader.close();
+				reader.close();
+			}
+		}
+	}
+
+	/**
+	 * @param bufferedReader
+	 * @param section
+	 * @throws IOException
+	 */
+	private void readVariables(final BufferedReader bufferedReader,
+			final Section section) throws IOException {
+		final StringBuilder variablesBuffer = new StringBuilder();
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
+			line = line.trim();
+			if (line.length() == 0 || line.startsWith("[")) {
+				break;
+			}
+			variablesBuffer.append(line + "\n");
+		}
+		// variable = value
+		final StringTokenizer tokenizer = new StringTokenizer(variablesBuffer
+				.toString(), "\n=");
+
+		while (tokenizer.hasMoreTokens()) {
+			final String key = tokenizer.nextToken().trim();
+			section.setVariable(key, tokenizer.nextToken().trim());
+		}
+	}
+
+	/**
+	 * @param line
+	 * @return
+	 */
+	private Section readSection(final String line) {
+		LOG.info("Reading section from line : " + line);
+		if (line.startsWith("[") && line.endsWith("]")) {
+			final Matcher matcher = SECTION_PATTERN.matcher(line);
+			matcher.find();// find the first match
+			final String sectionName = matcher.group().trim();
+
+			final boolean isSubSection = matcher.find();
+			// [ sectionName 'subSection' ]
+			Section section;
+			if (isSubSection) {
+				final String subSection = matcher.group().trim();
+				LOG.info("Reading subSection: " + sectionName + "->"
+						+ subSection);
+				final RootSection rootSection = getOrCreateSection(sectionName);
+				section = rootSection.getOrCreateSection(subSection);
+			} else {
+				LOG.info("Reading section: " + sectionName);
+				section = getOrCreateSection(sectionName);
+			}
+			return section;
+		} else {
+			throw new IllegalArgumentException(
+					"Unreadable section declaration [ sectionName *'subSectionName'] :"
+							+ line);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#save(java.lang.String)
+	 */
+	@Override
+	public void save(final String fileName) throws IOException {
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(fileName);
+			writer.append(getTextContent());
+		} finally {
+			if (writer != null) {
+				writer.close();
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#save(java.io.OutputStream)
+	 */
+	@Override
+	public void save(final OutputStream outputStream) throws IOException {
+		OutputStreamWriter writer = null;
+		try {
+			writer = new OutputStreamWriter(outputStream);
+			writer.append(getTextContent());
+		} finally {
+			if (writer != null) {
+				writer.close();
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#getVariables()
+	 */
 	@Override
 	public Map<String, String> getVariables() {
 		final Map<String, String> variables = new HashMap<String, String>();
 		for (final RootSection rootSection : rootSectionsMap.values()) {
-			variables.putAll(rootSection.getVariables());
+			variables.putAll(rootSection.getAllVariables());
 		}
 		return variables;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#clear()
+	 */
 	@Override
 	public void clear() {
 		this.rootSectionsMap.clear();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Iterable#iterator()
+	 */
 	@Override
 	public Iterator<Entry<String, String>> iterator() {
-		// TODO Auto-generated method stub
+		// TODO 
 		throw new UnsupportedOperationException();
 	}
 
-	public static void main(final String[] args) throws FileNotFoundException {
+	public static void main(final String[] args) throws IOException {
 		final Configuration config = new GitConfiguration();
 		config.setValue("user.name", "Timoteo Ponce");
 		config.setValue("user.email", "timo.slack@gmail.com");
@@ -525,10 +561,10 @@ public class GitConfiguration implements Configuration {
 
 		LOG.info(config.getKeySet().toString());
 
-		config.writeFile("resources/config-2");
+		config.save("resources/config-2");
 
 		config.clear();
-		config.readFromFile("resources/config-1");
+		config.load("resources/config-1");
 		LOG.info(config.getTextContent());
 
 		LOG.info("keySet :" + config.getKeySet());

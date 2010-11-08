@@ -1,6 +1,9 @@
 package org.timo.gitconfig;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
@@ -235,10 +238,12 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 * @param fileName
 	 *            target file for configuration variables
 	 */
-	void writeFile(String fileName);
+	void save(final String fileName) throws IOException;
+	
+	void save(final OutputStream outputStream) throws IOException;
 
 	/**
-	 * Reads all variables from given file, appending them to current
+	 * Loads all variables from given file, appending them to current
 	 * configuration variables and overriding entries if are present in file.
 	 * 
 	 * @param fileName
@@ -246,7 +251,9 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 * @throws FileNotFoundException
 	 *             if file can't be read
 	 */
-	void readFromFile(String fileName) throws FileNotFoundException;
+	void load(final String fileName) throws IOException;
+	
+	void load(final InputStream inputStream) throws IOException;
 
 	/**
 	 * Clear all sections and sub-sections in configuration.
