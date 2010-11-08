@@ -1,5 +1,5 @@
 <ivy-module version="2.0">
-    <info organisation="org.timo" module="git-like-config"/>
+    <info organisation="org.timo" module="gitconfig4j"/>
     <dependencies>
         <dependency org="junit" name="junit" rev="4.8"/>        
     </dependencies>
