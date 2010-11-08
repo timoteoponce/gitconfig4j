@@ -4,7 +4,7 @@ Example
 --------
 [core]  
         autocrlf = false
-	excludesfile = /Users/timoteo/.gitignore
+	excludesfile = /home/timoteo/.gitignore
 	editor = emacs
 	
 [alias]
@@ -12,7 +12,7 @@ Example
 		
 [user]
         name = Timoteo Ponce
-	email = timoteo.ponce@swissbytes.ch
+	email = timo.slack@gmail.com
 
 [color]
         diff = auto
