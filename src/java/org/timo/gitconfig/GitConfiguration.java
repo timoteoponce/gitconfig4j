@@ -111,6 +111,38 @@ public class GitConfiguration implements Configuration {
 			return getValue(rootSection, keys[1]);
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#getBoolean(java.lang.String)
+	 */
+	@Override
+	public Boolean getBoolean(String composedKey) {		
+		return Boolean.valueOf(getValue(composedKey));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#getDouble(java.lang.String)
+	 */
+	@Override
+	public Double getDouble(String composedKey) {
+		return Double.valueOf(getValue(composedKey));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#getInt(java.lang.String)
+	 */
+	@Override
+	public Integer getInt(String composedKey) {		
+		return Integer.parseInt(getValue(composedKey));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#getLong(java.lang.String)
+	 */
+	@Override
+	public Long getLong(String composedKey) {
+		return Long.valueOf(getValue(composedKey));
+	}
 
 	/**
 	 * @param composedKey
@@ -393,13 +425,16 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#load(java.lang.String)
 	 */
 	@Override
-	public void load(final String fileName) throws IOException {
-		this.clear();
+	public void load(final String fileName) throws IOException {		
 		final Configuration config = FileHandler.loadConfiguration(fileName);
-		this.addAll(config.getVariables());
+		this.addVariables(config.getVariables());
 	}
 
-	private void addAll(Map<String, String> variables) {
+	/* (non-Javadoc)
+	 * @see org.timo.gitconfig.Configuration#addVariables(java.util.Map)
+	 */
+	@Override
+	public void addVariables(Map<String, String> variables) {
 		for (Entry<String, String> entry : variables.entrySet()) {
 			this.setValue(entry.getKey(), entry.getValue());
 		}
@@ -411,10 +446,9 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#load(java.io.InputStream)
 	 */
 	@Override
-	public void load(final InputStream inputStream) throws IOException {
-		this.clear();
+	public void load(final InputStream inputStream) throws IOException {		
 		final Configuration config = FileHandler.loadConfiguration(inputStream);
-		this.addAll(config.getVariables());
+		this.addVariables(config.getVariables());
 	}
 
 	/*
@@ -560,5 +594,7 @@ public class GitConfiguration implements Configuration {
 
 		LOG.info("variables :" + config.getVariables());
 	}
+
+
 
 }

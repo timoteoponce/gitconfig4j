@@ -32,13 +32,13 @@ import java.util.Map.Entry;
  * 		name = Timoteo Ponce
  * </pre>
  * 
- * As a feature, this {@link Configuration} does not expose implementation details 
- * or internal components, giving a simple and generic public API.
+ * As a feature, this {@link Configuration} does not expose implementation
+ * details or internal components, giving a simple and generic public API.
  * 
  * @author Timoteo Ponce
  * 
  */
-public interface Configuration extends Iterable<Entry<String, String>>{
+public interface Configuration extends Iterable<Entry<String, String>> {
 
 	/**
 	 * Retrieves a given variable value from configuration related to given
@@ -49,6 +49,15 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 * @return value of variable or an empty string if not present
 	 */
 	String getValue(String composedKey);
+	
+	Integer getInt(String composedKey);
+	
+	Long getLong(String composedKey);
+	
+	Double getDouble(String composedKey);
+	
+	Boolean getBoolean(String composedKey);	
+	
 
 	/**
 	 * Retrieves a given variable value from configuration related to given
@@ -148,8 +157,16 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 * </pre>
 	 * 
 	 * @return
-	 */	
+	 */
 	Map<String, String> getVariables(String composedKey);
+
+	/**
+	 * Adds all given variables to configuration, overriding any existing
+	 * variable.
+	 * 
+	 * @param variables
+	 */
+	void addVariables(Map<String, String> variables);
 
 	/**
 	 * Removes a complete configuration section that matches with given
