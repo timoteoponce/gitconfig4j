@@ -24,7 +24,11 @@ public class Section {
 	}
 
 	public String getVariable(final String key) {
-		return variables.get(key);
+		String value = variables.get(key);
+		if (value == null) {
+			value = "";
+		}
+		return value;
 	}
 
 	public String getName() {
@@ -76,7 +80,7 @@ public class Section {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Section other = (Section) obj;
+		final Section other = (Section) obj;
 		if (name == null) {
 			if (other.name != null) {
 				return false;

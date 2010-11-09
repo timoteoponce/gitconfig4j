@@ -148,7 +148,6 @@ public class GitConfiguration implements Configuration {
 			final Section subSection = rootSection.getSection(subSectionName);
 			value = subSection.getVariable(key);
 		}
-
 		return value;
 	}
 
@@ -317,12 +316,20 @@ public class GitConfiguration implements Configuration {
 	@Override
 	public void renameSection(final String sectionName, final String oldName,
 			final String newName) {
+		final String[] names = splitKeys(newName);
 		final RootSection rootSection = rootSectionsMap.get(sectionName);
 		if (rootSection != null && rootSection.getSection(oldName) != null) {
 			LOG.info("Renaming sub-section '" + sectionName + "." + oldName
 					+ "' to '" + newName + "'");
 			final Section section = rootSection.removeSection(oldName);
-			section.setName(newName);
+			if (names.length == 1) {
+				section.setName(names[0]);
+			} else {
+				rootSectionsMap.remove(rootSection.getName());
+				rootSection.setName(names[0]);
+				section.setName(names[1]);
+				rootSectionsMap.put(rootSection.getName(), rootSection);
+			}
 			rootSection.setSection(section);
 		}
 	}

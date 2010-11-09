@@ -1,5 +1,7 @@
 package org.timo.gitconfig;
 
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -109,6 +111,26 @@ public class GitConfigurationTest {
 		Assert.assertEquals("testValue5", config.getValue("renamedCore.test3"));
 		Assert.assertEquals("testValue6", config.getValue("renamedCore.test4"));
 
+	}
+
+	@Test
+	public void getFilteredVariables() {
+		final Configuration config = new GitConfiguration();
+		config.setValue("main.test1", "testValue1");
+		config.setValue("main.test2", "testValue2");
+		config.setValue("main.sub.test1", "testValue2");
+		config.setValue("main.sub.test2", "testValue2");
+		config.setValue("core.test1", "testValue3");
+		config.setValue("core.test2", "testValue4");
+		config.setValue("core.test3", "testValue5");
+		config.setValue("core.test4", "testValue6");
+
+		final Map<String, String> filteredVars = config.getVariables("main");
+		Assert.assertTrue(filteredVars.containsKey("main.test1"));
+		Assert.assertTrue(filteredVars.containsKey("main.test2"));
+		Assert.assertTrue(filteredVars.containsKey("main.sub.test1"));
+		Assert.assertTrue(filteredVars.containsKey("main.sub.test2"));
+		Assert.assertFalse(filteredVars.containsKey("core.test1"));
 	}
 
 }
