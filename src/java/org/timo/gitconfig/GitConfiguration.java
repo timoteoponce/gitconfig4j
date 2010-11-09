@@ -1,14 +1,8 @@
 package org.timo.gitconfig;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,11 +10,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GitConfiguration implements Configuration {
 
@@ -28,9 +19,6 @@ public class GitConfiguration implements Configuration {
 			.getName());
 
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
-
-	private static final Pattern SECTION_PATTERN = Pattern
-	.compile("(\\w)*[^\\s'\"\\[\\]]");
 
 	/*
 	 * (non-Javadoc)
@@ -367,7 +355,9 @@ public class GitConfiguration implements Configuration {
 			throw new NullPointerException("Null values are not allowed");
 		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
-		rootSection.setVariable(key, value);
+		if (key.length() > 0) {
+			rootSection.setVariable(key, value);
+		}
 	}
 
 	/*
@@ -384,7 +374,7 @@ public class GitConfiguration implements Configuration {
 		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-		.getOrCreateSection(subSectionName);
+				.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -404,28 +394,14 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public void load(final String fileName) throws IOException {
-		Reader reader = null;
-		BufferedReader bufferedReader = null;
-		try {
-			reader = new FileReader(fileName);
-			bufferedReader = new BufferedReader(reader);
-			load(bufferedReader);
-		} finally {
-			if (bufferedReader != null) {
-				bufferedReader.close();
-				reader.close();
-			}
-		}
+		this.clear();
+		final Configuration config = FileHandler.loadConfiguration(fileName);
+		this.addAll(config.getVariables());
 	}
 
-	private void load(final BufferedReader bufferedReader) throws IOException {
-		String line;
-		while ((line = bufferedReader.readLine()) != null) {
-			line = line.trim();
-			if (line.length() > 0) {
-				final Section section = readSection(line);
-				readVariables(bufferedReader, section);
-			}
+	private void addAll(Map<String, String> variables) {
+		for (Entry<String, String> entry : variables.entrySet()) {
+			this.setValue(entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -436,76 +412,9 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public void load(final InputStream inputStream) throws IOException {
-		Reader reader = null;
-		BufferedReader bufferedReader = null;
-		try {
-			reader = new InputStreamReader(inputStream);
-			bufferedReader = new BufferedReader(reader);
-			load(bufferedReader);
-		} finally {
-			if (bufferedReader != null) {
-				bufferedReader.close();
-				reader.close();
-			}
-		}
-	}
-
-	/**
-	 * @param bufferedReader
-	 * @param section
-	 * @throws IOException
-	 */
-	private void readVariables(final BufferedReader bufferedReader,
-			final Section section) throws IOException {
-		final StringBuilder variablesBuffer = new StringBuilder();
-		String line;
-		while ((line = bufferedReader.readLine()) != null) {
-			line = line.trim();
-			if (line.length() == 0 || line.startsWith("[")) {
-				break;
-			}
-			variablesBuffer.append(line + "\n");
-		}
-		// variable = value
-		final StringTokenizer tokenizer = new StringTokenizer(variablesBuffer
-				.toString(), "\n=");
-
-		while (tokenizer.hasMoreTokens()) {
-			final String key = tokenizer.nextToken().trim();
-			section.setVariable(key, tokenizer.nextToken().trim());
-		}
-	}
-
-	/**
-	 * @param line
-	 * @return
-	 */
-	private Section readSection(final String line) {
-		LOG.info("Reading section from line : " + line);
-		if (line.startsWith("[") && line.endsWith("]")) {
-			final Matcher matcher = SECTION_PATTERN.matcher(line);
-			matcher.find();// find the first match
-			final String sectionName = matcher.group().trim();
-
-			final boolean isSubSection = matcher.find();
-			// [ sectionName 'subSection' ]
-			Section section;
-			if (isSubSection) {
-				final String subSection = matcher.group().trim();
-				LOG.info("Reading subSection: " + sectionName + "->"
-						+ subSection);
-				final RootSection rootSection = getOrCreateSection(sectionName);
-				section = rootSection.getOrCreateSection(subSection);
-			} else {
-				LOG.info("Reading section: " + sectionName);
-				section = getOrCreateSection(sectionName);
-			}
-			return section;
-		} else {
-			throw new IllegalArgumentException(
-					"Unreadable section declaration [ sectionName *'subSectionName'] :"
-					+ line);
-		}
+		this.clear();
+		final Configuration config = FileHandler.loadConfiguration(inputStream);
+		this.addAll(config.getVariables());
 	}
 
 	/*
@@ -515,15 +424,7 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public void save(final String fileName) throws IOException {
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(fileName);
-			writer.append(getTextContent());
-		} finally {
-			if (writer != null) {
-				writer.close();
-			}
-		}
+		FileHandler.save(fileName, this);
 	}
 
 	/*
@@ -533,15 +434,7 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public void save(final OutputStream outputStream) throws IOException {
-		OutputStreamWriter writer = null;
-		try {
-			writer = new OutputStreamWriter(outputStream);
-			writer.append(getTextContent());
-		} finally {
-			if (writer != null) {
-				writer.close();
-			}
-		}
+		FileHandler.save(outputStream, this);
 	}
 
 	/*
@@ -655,10 +548,10 @@ public class GitConfiguration implements Configuration {
 
 		LOG.info(config.getKeySet().toString());
 
-		config.save("resources/config-2");
+		// config.save("resources/config-2");
 
 		config.clear();
-		config.load("resources/config-1");
+		config.load("resources/config-2");
 		LOG.info(config.getTextContent());
 
 		LOG.info("keySet :" + config.getKeySet());
