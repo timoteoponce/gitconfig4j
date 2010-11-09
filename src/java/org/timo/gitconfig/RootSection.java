@@ -23,7 +23,7 @@ class RootSection extends Section {
 	public void setSection(final Section section) {
 		if (section instanceof RootSection) {
 			throw new IllegalArgumentException(
-					"Nested RootSections are not supported.");
+			"Nested RootSections are not supported.");
 		}
 		sectionMap.put(section.getName(), section);
 	}
@@ -117,6 +117,19 @@ class RootSection extends Section {
 			values.addAll(subSection.getValues());
 		}
 		return values;
+	}
+
+	public boolean isAllEmpty() {
+		boolean isEmpty = super.isEmpty() && sectionMap.isEmpty();
+		if (!isEmpty) {
+			for (final Section section : sectionMap.values()) {
+				if (section.isEmpty()) {
+					isEmpty = true;
+					break;
+				}
+			}
+		}
+		return isEmpty;
 	}
 
 	public Collection<Section> getSections() {

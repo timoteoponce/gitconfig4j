@@ -1,7 +1,6 @@
 package org.timo.gitconfig;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -31,7 +30,7 @@ public class GitConfiguration implements Configuration {
 	private final Map<String, RootSection> rootSectionsMap = new HashMap<String, RootSection>();
 
 	private static final Pattern SECTION_PATTERN = Pattern
-			.compile("(\\w)*[^\\s'\"\\[\\]]");
+	.compile("(\\w)*[^\\s'\"\\[\\]]");
 
 	/*
 	 * (non-Javadoc)
@@ -190,8 +189,21 @@ public class GitConfiguration implements Configuration {
 	 */
 	@Override
 	public Collection<String> getValues(final String composedKey) {
-		//TODO
-		throw new UnsupportedOperationException();
+		final String[] keys = splitKeys(composedKey);
+		final Collection<String> values = new ArrayList<String>();
+		final RootSection rootSection = rootSectionsMap.get(keys[0]);
+
+		if (rootSection != null) {
+			if (keys.length == 1) {
+				values.addAll(rootSection.getAllValues());
+			} else {
+				final Section subSection = rootSection.getSection(keys[1]);
+				if (subSection != null) {
+					values.addAll(subSection.getValues());
+				}
+			}
+		}
+		return values;
 	}
 
 	/*
@@ -203,8 +215,10 @@ public class GitConfiguration implements Configuration {
 	public void remove(final String composedKey) {
 		final String[] keys = splitKeys(composedKey);
 		if (keys.length == 2) {
+			LOG.info("Removing rootSection variable : " + composedKey);
 			remove(keys[0], keys[1]);
 		} else {
+			LOG.info("Removing subSection variable : " + composedKey);
 			remove(keys[0], keys[1], keys[2]);
 		}
 	}
@@ -221,7 +235,10 @@ public class GitConfiguration implements Configuration {
 		if (keys.length > 1) {
 			remove(keys[0], keys[1], key);
 		} else {
-			rootSectionsMap.remove(sectionName);
+			final RootSection rootSection = rootSectionsMap.get(sectionName);
+			if (rootSection != null) {
+				rootSection.removeVariable(key);
+			}
 		}
 	}
 
@@ -360,7 +377,7 @@ public class GitConfiguration implements Configuration {
 		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-				.getOrCreateSection(subSectionName);
+		.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -394,7 +411,7 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
-	private void load(BufferedReader bufferedReader) throws IOException {
+	private void load(final BufferedReader bufferedReader) throws IOException {
 		String line;
 		while ((line = bufferedReader.readLine()) != null) {
 			line = line.trim();
@@ -405,7 +422,9 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.timo.gitconfig.Configuration#load(java.io.InputStream)
 	 */
 	@Override
@@ -478,7 +497,7 @@ public class GitConfiguration implements Configuration {
 		} else {
 			throw new IllegalArgumentException(
 					"Unreadable section declaration [ sectionName *'subSectionName'] :"
-							+ line);
+					+ line);
 		}
 	}
 
@@ -500,7 +519,9 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.timo.gitconfig.Configuration#save(java.io.OutputStream)
 	 */
 	@Override
@@ -516,7 +537,9 @@ public class GitConfiguration implements Configuration {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.timo.gitconfig.Configuration#getVariables()
 	 */
 	@Override
@@ -528,7 +551,32 @@ public class GitConfiguration implements Configuration {
 		return variables;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#getVariables(java.lang.String)
+	 */
+	public Map<String, String> getVariables(final String composedKey) {
+		final String[] keys = splitKeys(composedKey);
+		final Map<String, String> variables = new HashMap<String, String>();
+		final RootSection rootSection = rootSectionsMap.get(keys[0]);
+
+		if (rootSection != null) {
+			if (keys.length == 1) {
+				variables.putAll(rootSection.getAllVariables());
+			} else {
+				final Section subSection = rootSection.getSection(keys[1]);
+				if (subSection != null) {
+					variables.putAll(subSection.getVariables());
+				}
+			}
+		}
+		return variables;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.timo.gitconfig.Configuration#clear()
 	 */
 	@Override
@@ -536,13 +584,52 @@ public class GitConfiguration implements Configuration {
 		this.rootSectionsMap.clear();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Iterable#iterator()
 	 */
 	@Override
 	public Iterator<Entry<String, String>> iterator() {
-		// TODO 
-		throw new UnsupportedOperationException();
+		return new ConfigurationIterator(this);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#containsVariable(java.lang.String)
+	 */
+	@Override
+	public boolean containsVariable(final String composedKey) {
+		final String[] keys = splitKeys(composedKey);
+		boolean exists = false;
+		if (keys.length > 0 && keys.length < 4) {
+			if (keys.length == 2) {
+				exists = !getValue(keys[0], keys[1]).isEmpty();
+			} else {
+				exists = !getValue(keys[0], keys[1], keys[2]).isEmpty();
+			}
+		}
+		return exists;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.timo.gitconfig.Configuration#isEmpty()
+	 */
+	@Override
+	public boolean isEmpty() {
+		boolean isEmpty = rootSectionsMap.isEmpty();
+		if (!isEmpty) {
+			for (final RootSection rootSection : rootSectionsMap.values()) {
+				if (rootSection.isAllEmpty()) {
+					isEmpty = true;
+					break;
+				}
+			}
+		}
+		return isEmpty;
 	}
 
 	public static void main(final String[] args) throws IOException {

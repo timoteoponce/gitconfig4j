@@ -107,8 +107,25 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 
 	Set<String> getKeySet();
 
+	/**
+	 * Returns all variable values held in this configuration. Duplicated values
+	 * are allowed.
+	 * 
+	 * @return All configuration variable values.
+	 */
 	Collection<String> getValues();
 
+	/**
+	 * Returns all variable values held in given path. e.g.
+	 * 
+	 * <pre>
+	 * - "core" -> all values held in 'core' section.
+	 * - "core.editor " -> all values held in 'core.editor' section.
+	 * </pre>
+	 * 
+	 * @param composedKey
+	 * @return
+	 */
 	Collection<String> getValues(String composedKey);
 
 	/**
@@ -121,6 +138,18 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 * @return
 	 */
 	Map<String, String> getVariables();
+
+	/**
+	 * Returns a {@link Map} containing all variables related to a given path in
+	 * a format:
+	 * 
+	 * <pre>
+	 * - [variableKey=variableValue] => e.g. "core.path.format = non-iso "
+	 * </pre>
+	 * 
+	 * @return
+	 */	
+	Map<String, String> getVariables(String composedKey);
 
 	/**
 	 * Removes a complete configuration section that matches with given
@@ -239,7 +268,7 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 *            target file for configuration variables
 	 */
 	void save(final String fileName) throws IOException;
-	
+
 	void save(final OutputStream outputStream) throws IOException;
 
 	/**
@@ -252,12 +281,16 @@ public interface Configuration extends Iterable<Entry<String, String>>{
 	 *             if file can't be read
 	 */
 	void load(final String fileName) throws IOException;
-	
+
 	void load(final InputStream inputStream) throws IOException;
 
 	/**
 	 * Clear all sections and sub-sections in configuration.
 	 */
 	void clear();
+
+	boolean isEmpty();
+
+	boolean containsVariable(String composedKey);
 
 }
