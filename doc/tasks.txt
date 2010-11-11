@@ -12,3 +12,91 @@ Tasks
 	
 	- Description of fail situations
 	* Status: Pending 
+	
+Features 
+	--replace-all
+    Default behavior is to replace at most one line. This replaces all lines matching the key (and optionally the value_regex). 
+    * TODO
+    
+    --add 
+    Adds a new line to the option without altering any existing values. This is the same as providing ^$ as the value_regex in --replace-all.
+    * TODO 
+    
+	--get
+    Get the value for a given key (optionally filtered by a regex matching the value). Returns error code 1 if the key was not found and error code 2 if multiple key values were found.
+    * TODO
+    
+	--get-all
+    Like get, but does not fail if the number of values for the key is not exactly one.
+    * TODO 
+    
+	--get-regexp
+    Like --get-all, but interprets the name as a regular expression. Also outputs the key names.
+    * TODO
+    
+	--global
+    For writing options: write to global ~/.gitconfig file rather than the repository .git/config.
+    For reading options: read only from global ~/.gitconfig rather than from all available files.
+    * CHECK
+
+	--system
+    For writing options: write to system-wide $(prefix)/etc/gitconfig rather than the repository .git/config.
+    For reading options: read only from system-wide $(prefix)/etc/gitconfig rather than from all available files.
+    * CHECK
+    
+	-f config-file	
+	--file config-file
+    Use the given config file instead of the one specified by GIT_CONFIG.
+    * TEST
+    
+	--remove-section
+    Remove the given section from the configuration file.
+    * DONE
+    
+	--rename-section
+    Rename the given section to a new name.
+    * DONE
+    
+	--unset
+    Remove the line matching the key from config file.
+    * TEST
+    
+	--unset-all
+    Remove all lines matching the key from config file.
+    * TODO
+    
+	-l
+	--list
+    List all variables set in config file.
+    * DONE
+    
+	--bool
+    git config will ensure that the output is "true" or "false"
+    * DONE
+    
+	--int
+    git config will ensure that the output is a simple decimal number. 
+    An optional value suffix of k, m, or g in the config file will cause the value to be multiplied by 1024, 1048576, or 1073741824 prior to output.
+    * DONE
+    
+	--bool-or-int
+    git config will ensure that the output matches the format of either --bool or --int, as described above.
+    * DONE
+    
+	--path
+    git-config will expand leading ~ to the value of $HOME, and ~user to the home directory for the specified user. 
+    This option has no effect when setting the value (but you can use git config bla ~/ from the command line to let your shell do the expansion).
+    * TODO
+     
+	-z
+	--null
+    For all options that output values and/or keys, always end values with the null character (instead of a newline). 
+    Use newline instead as a delimiter between key and value. This allows for secure parsing of the output without getting confused e.g. by values that contain line breaks.
+    * TODO
+     
+	-e
+	--edit
+    Opens an editor to modify the specified config file; either --system, --global, or repository (default).
+    * TODO 
+    
+	
