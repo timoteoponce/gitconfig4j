@@ -1,8 +1,12 @@
+# Comment 1
+; comment 2
 [core]  
         autocrlf = false
 		excludesfile = /Users/timoteo/.gitignore
+		; inner comment
 		editor = emacs		
 	
+	# end comment
 [alias]
         last = cat-file commit HEAD
 		
@@ -18,4 +22,5 @@
 
 [remote "origin"]
         url = http://git.kernel.org/pub/scm/git/git.git
+        ; inner comment 2
 		fetch = +refs/heads/*:refs/remotes/origin/*

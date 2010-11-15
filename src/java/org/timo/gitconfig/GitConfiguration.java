@@ -9,10 +9,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
+/**
+ * @author Timoteo Ponce
+ * 
+ */
 public class GitConfiguration implements Configuration {
 
 	private static final Logger LOG = Logger.getLogger(GitConfiguration.class
@@ -111,12 +115,12 @@ public class GitConfiguration implements Configuration {
 			return getValue(rootSection, keys[1]);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.timo.gitconfig.Configuration#getBoolean(java.lang.String)
 	 */
 	@Override
-	public Boolean getBoolean(String composedKey) {		
+	public Boolean getBoolean(final String composedKey) {		
 		return Boolean.valueOf(getValue(composedKey));
 	}
 
@@ -124,7 +128,7 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#getDouble(java.lang.String)
 	 */
 	@Override
-	public Double getDouble(String composedKey) {
+	public Double getDouble(final String composedKey) {
 		return Double.valueOf(getValue(composedKey));
 	}
 
@@ -132,7 +136,7 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#getInt(java.lang.String)
 	 */
 	@Override
-	public Integer getInt(String composedKey) {		
+	public Integer getInt(final String composedKey) {		
 		return Integer.parseInt(getValue(composedKey));
 	}
 
@@ -140,7 +144,7 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#getLong(java.lang.String)
 	 */
 	@Override
-	public Long getLong(String composedKey) {
+	public Long getLong(final String composedKey) {
 		return Long.valueOf(getValue(composedKey));
 	}
 
@@ -406,7 +410,7 @@ public class GitConfiguration implements Configuration {
 		}
 		final RootSection rootSection = getOrCreateSection(sectionName);
 		final Section subSection = rootSection
-				.getOrCreateSection(subSectionName);
+		.getOrCreateSection(subSectionName);
 		subSection.setVariable(key, value);
 	}
 
@@ -434,8 +438,8 @@ public class GitConfiguration implements Configuration {
 	 * @see org.timo.gitconfig.Configuration#addVariables(java.util.Map)
 	 */
 	@Override
-	public void addVariables(Map<String, String> variables) {
-		for (Entry<String, String> entry : variables.entrySet()) {
+	public void addVariables(final Map<String, String> variables) {
+		for (final Entry<String, String> entry : variables.entrySet()) {
 			this.setValue(entry.getKey(), entry.getValue());
 		}
 	}
@@ -565,36 +569,6 @@ public class GitConfiguration implements Configuration {
 		}
 		return isEmpty;
 	}
-
-	public static void main(final String[] args) throws IOException {
-		final Configuration config = new GitConfiguration();
-		config.setValue("user.name", "Timoteo Ponce");
-		config.setValue("user.email", "timo.slack@gmail.com");
-		config.setValue("merge.tool.command", "merge");
-		config.setValue("merge.tool.path", "/usr/bin");
-		config.setValue("source.config.path", "/opt/projects");
-		config.setValue("source.config.owner", "Hugo Ponce");
-
-		LOG.info(config.getTextContent());
-		config.renameSection("source", "project");
-		config.renameSection("merge.tool", "externalTool");
-		LOG.info(config.getTextContent());
-
-		LOG.info(config.getKeySet().toString());
-
-		// config.save("resources/config-2");
-
-		config.clear();
-		config.load("resources/config-2");
-		LOG.info(config.getTextContent());
-
-		LOG.info("keySet :" + config.getKeySet());
-
-		LOG.info("values :" + config.getValues());
-
-		LOG.info("variables :" + config.getVariables());
-	}
-
 
 
 }

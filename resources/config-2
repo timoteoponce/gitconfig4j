@@ -1,0 +1,18 @@
+		 project.config.path = /opt/projects
+		 project.config.owner = Hugo Ponce
+
+[project 'config'] 
+		 path = /opt/projects
+		 owner = Hugo Ponce
+
+		 merge.externalTool.command = merge
+		 merge.externalTool.path = /usr/bin
+
+[merge 'externalTool'] 
+		 command = merge
+		 path = /usr/bin
+
+[user] 
+		 user.email = timo.slack@gmail.com
+		 user.name = Timoteo Ponce
+

@@ -23,6 +23,8 @@ public class FileHandler {
 	private static final Logger LOG = Logger.getLogger(FileHandler.class
 			.getName());
 
+	private static final String COMMENT_CHARS = "#;";
+
 	private static final Pattern SECTION_PATTERN = Pattern
 			.compile("(\\w)*[^\\s'\"\\[\\]]");
 
@@ -44,8 +46,8 @@ public class FileHandler {
 		return config;
 	}
 
-	private static void load(final BufferedReader bufferedReader, Configuration config)
-			throws IOException {
+	private static void load(final BufferedReader bufferedReader,
+			final Configuration config) throws IOException {
 		String line;
 		while ((line = bufferedReader.readLine()) != null) {
 			line = line.trim();
@@ -56,11 +58,12 @@ public class FileHandler {
 		}
 	}
 
-	private static boolean isNotEmpty(String line) {
-		return line.length() > 0 && !line.startsWith("#");
+	private static boolean isNotEmpty(final String line) {
+		return line.length() > 0 && COMMENT_CHARS.indexOf(line.charAt(0)) == -1;
 	}
 
-	private static String readSection(final String line, Configuration config) {
+	private static String readSection(final String line,
+			final Configuration config) {
 		LOG.info("Reading section from line : " + line);
 		if (line.startsWith("[") && line.endsWith("]")) {
 			final Matcher matcher = SECTION_PATTERN.matcher(line);
@@ -93,7 +96,8 @@ public class FileHandler {
 	 * @throws IOException
 	 */
 	private static void readVariables(final BufferedReader bufferedReader,
-			final String sectionPath, Configuration config) throws IOException {
+			final String sectionPath, final Configuration config)
+			throws IOException {
 		final StringBuilder variablesBuffer = new StringBuilder();
 		String line;
 		while ((line = bufferedReader.readLine()) != null) {
@@ -108,8 +112,8 @@ public class FileHandler {
 			}
 		}
 		// variable = value
-		final StringTokenizer tokenizer = new StringTokenizer(variablesBuffer
-				.toString(), "\n=");
+		final StringTokenizer tokenizer = new StringTokenizer(
+				variablesBuffer.toString(), "\n=");
 
 		while (tokenizer.hasMoreTokens()) {
 			final String key = sectionPath + "." + tokenizer.nextToken().trim();
@@ -135,7 +139,7 @@ public class FileHandler {
 		return config;
 	}
 
-	public static void save(final String fileName, Configuration config)
+	public static void save(final String fileName, final Configuration config)
 			throws IOException {
 		FileWriter writer = null;
 		try {
@@ -148,8 +152,8 @@ public class FileHandler {
 		}
 	}
 
-	public static void save(final OutputStream outputStream, Configuration config)
-			throws IOException {
+	public static void save(final OutputStream outputStream,
+			final Configuration config) throws IOException {
 		OutputStreamWriter writer = null;
 		try {
 			writer = new OutputStreamWriter(outputStream);
@@ -161,9 +165,10 @@ public class FileHandler {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		FileHandler reader = new FileHandler();
-		Configuration config = reader.loadConfiguration("resources/config-2");
+	public static void main(final String[] args) throws IOException {
+		final FileHandler reader = new FileHandler();
+		final Configuration config = reader
+				.loadConfiguration("resources/config-2");
 		LOG.info(config.getTextContent());
 	}
 
