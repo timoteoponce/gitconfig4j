@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Copyright (C) 2010 Timoteo Ponce
+ * 
  * @author Timoteo Ponce
  * 
  */
@@ -163,13 +165,6 @@ public class FileHandler {
 				writer.close();
 			}
 		}
-	}
-
-	public static void main(final String[] args) throws IOException {
-		final FileHandler reader = new FileHandler();
-		final Configuration config = reader
-				.loadConfiguration("resources/config-2");
-		LOG.info(config.getTextContent());
 	}
 
 }

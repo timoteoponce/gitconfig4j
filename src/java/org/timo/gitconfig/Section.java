@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Copyright (C) 2010 Timoteo Ponce
+ * 
  * @author Timoteo Ponce
  * 
  */

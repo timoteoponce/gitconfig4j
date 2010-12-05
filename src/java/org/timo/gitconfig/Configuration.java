@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
+ * Copyright (C) 2010 Timoteo Ponce
+ * 
  * {@link Properties}-like component allowing a configuration structure:
  * 
  * <pre>

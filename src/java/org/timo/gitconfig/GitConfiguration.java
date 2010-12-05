@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
+ * Copyright (C) 2010 Timoteo Ponce
+ * 
  * @author Timoteo Ponce
  * 
  */

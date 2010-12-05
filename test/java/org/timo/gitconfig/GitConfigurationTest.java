@@ -1,6 +1,8 @@
 package org.timo.gitconfig;
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,6 +12,8 @@ import org.junit.Test;
  * 
  */
 public class GitConfigurationTest {
+	
+	private static final Logger LOG = Logger.getLogger(GitConfigurationTest.class.getName());
 
 	@Test
 	public void getInvalidValue() {
@@ -131,6 +135,23 @@ public class GitConfigurationTest {
 		Assert.assertTrue(filteredVars.containsKey("main.sub.test1"));
 		Assert.assertTrue(filteredVars.containsKey("main.sub.test2"));
 		Assert.assertFalse(filteredVars.containsKey("core.test1"));
+	}
+	
+	@Test
+	public void iterateConfiguration(){
+		final Configuration config = new GitConfiguration();
+		config.setValue("main.test1", "testValue1");
+		config.setValue("main.test2", "testValue2");
+		config.setValue("main.sub.test1", "testValue2");
+		config.setValue("main.sub.test2", "testValue2");
+		config.setValue("core.test1", "testValue3");
+		config.setValue("core.test2", "testValue4");
+		config.setValue("core.test3", "testValue5");
+		config.setValue("core.test4", "testValue6");
+		
+		for(Entry<String, String> variable: config){
+			LOG.info("Variable "+variable.getKey() + " = "+variable.getValue());			
+		}
 	}
 
 }
