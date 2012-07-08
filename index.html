@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Gitconfig4j by timoteoponce</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/timoteoponce/gitconfig4j">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/timoteoponce/gitconfig4j/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/timoteoponce/gitconfig4j/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Gitconfig4j</h1>
+          <p>Configuration management of git-like properties for Java (git gitconfig java). </p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/timoteoponce">timoteoponce</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h3>Overview</h3>
+
+<p>Library providing simple and lite git-config configuration support for Java, allowing to use this simple and clear configuration layout.</p>
+
+<pre><code>#
+# This is the config file, and
+# a '#' or ';' character indicates
+# a comment
+#
+
+; core variables
+[core]
+        ; Don't trust file modes
+        filemode = false
+
+; Our diff algorithm
+[diff]
+        external = /usr/local/bin/diff-wrapper
+        renames = true
+
+; Proxy settings
+[core]
+        gitproxy="proxy-command" for kernel.org
+        gitproxy=default-proxy ; for all the rest
+
+
+</code></pre>
+
+<h3>Features</h3>
+
+<ul>
+<li>Support of most native git-config options.</li>
+<li>Java native libraries (jre6).</li>
+<li>External libraries not required.</li>
+<li>Load of git-config-like configuration files.</li>
+<li>Save of git-config-like configuration files.</li>
+<li>Simple API for variables handling (as in git-config).</li>
+</ul><h3>Limitations</h3>
+
+<ul>
+<li>Load/Save of comments not supported, even though, comments in files are allowed.</li>
+<li>Section-variables are randomly ordered when saving.</li>
+<li>Regex operations are not supported (planned for future releases.</li>
+</ul><h3>Usage</h3>
+
+<div class="highlight">
+<pre><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">timo</span><span class="o">.</span><span class="na">gitconfig</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.logging.Logger</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">GitConfigurationExample</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">Logger</span>
+            <span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">GitConfigurationExample</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Test file contents:</span>
+<span class="cm">     * </span>
+<span class="cm">     * &lt;pre&gt;</span>
+<span class="cm">     * # Comment 1</span>
+<span class="cm">     * ; comment 2</span>
+<span class="cm">     * [core]  </span>
+<span class="cm">     *      autocrlf = false</span>
+<span class="cm">     *  excludesfile = /Users/timoteo/.gitignore</span>
+<span class="cm">     *  ; inner comment</span>
+<span class="cm">     *  editor = emacs      </span>
+<span class="cm">     *  </span>
+<span class="cm">     *  # end comment</span>
+<span class="cm">     * [alias]</span>
+<span class="cm">     *      last = cat-file commit HEAD</span>
+<span class="cm">     *      </span>
+<span class="cm">     * [user]</span>
+<span class="cm">     *      name = Timoteo Ponce</span>
+<span class="cm">     *  email = timoteo.ponce@swissbytes.ch</span>
+<span class="cm">     * </span>
+<span class="cm">     * [color]</span>
+<span class="cm">     *      diff = auto</span>
+<span class="cm">     *  status = auto</span>
+<span class="cm">     *  branch = auto</span>
+<span class="cm">     *  interactive = auto      </span>
+<span class="cm">     * </span>
+<span class="cm">     * [remote "origin"]</span>
+<span class="cm">     *      url = http://git.kernel.org/pub/scm/git/git.git</span>
+<span class="cm">     *      ; inner comment 2</span>
+<span class="cm">     *  fetch = +refs/heads/*:refs/remotes/origin/*</span>
+<span class="cm">     * &lt;/pre&gt;</span>
+<span class="cm">     * </span>
+<span class="cm">     * @param args</span>
+<span class="cm">     * @throws IOException</span>
+<span class="cm">     */</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">Configuration</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GitConfiguration</span><span class="o">();</span>
+        <span class="c1">// load configuration fike</span>
+        <span class="n">config</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="s">"resources/config-1"</span><span class="o">);</span>
+        <span class="c1">// show its content</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Configuration content :\n"</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getTextContent</span><span class="o">());</span>
+
+        <span class="c1">// get some variables</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"color.branch="</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getValue</span><span class="o">(</span><span class="s">"color.branch"</span><span class="o">)</span> <span class="o">);</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"user.name="</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getValue</span><span class="o">(</span><span class="s">"user.name"</span><span class="o">)</span> <span class="o">);</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"remote.origin.url="</span> <span class="o">+</span>
+                   <span class="n">config</span><span class="o">.</span><span class="na">getValue</span><span class="o">(</span><span class="s">"remote.origin.url"</span><span class="o">)</span> <span class="o">);</span>
+
+        <span class="c1">// create a new section</span>
+        <span class="n">config</span><span class="o">.</span><span class="na">setValue</span><span class="o">(</span><span class="s">"mysection.editor"</span><span class="o">,</span> <span class="s">"emacs"</span><span class="o">);</span>
+        <span class="n">config</span><span class="o">.</span><span class="na">setValue</span><span class="o">(</span><span class="s">"mysection.emacs.command"</span><span class="o">,</span> <span class="s">"/usr/bin/emacs"</span><span class="o">);</span>
+        <span class="c1">// show updated content</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Configuration content :\n"</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getTextContent</span><span class="o">());</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Renaming section 'user' to 'custom '"</span><span class="o">);</span>
+        <span class="n">config</span><span class="o">.</span><span class="na">renameSection</span><span class="o">(</span><span class="s">"user"</span><span class="o">,</span> <span class="s">"custom"</span><span class="o">);</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Configuration content :\n"</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getTextContent</span><span class="o">());</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Renaming section 'remote.origin' to 'external.source'"</span><span class="o">);</span>
+        <span class="n">config</span><span class="o">.</span><span class="na">renameSection</span><span class="o">(</span><span class="s">"remote.origin"</span><span class="o">,</span> <span class="s">"external.source"</span><span class="o">);</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Configuration content :\n"</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="na">getTextContent</span><span class="o">());</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</pre>
+</div>
+
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+    
+  </body>
+</html>
